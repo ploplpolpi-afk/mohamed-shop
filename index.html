@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>متجر الملابس المتكامل</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <header class="site-header">
+        <div class="site-brand">متجرنا</div>
+        <div class="site-search">
+            <div style="position:relative; width:100%;">
+                <input id="site-search-input" type="search" placeholder="ابحث عن منتجات، مثال: تيشرت" aria-label="search">
+                <div id="search-suggestions" class="search-suggestions" aria-hidden="true"></div>
+            </div>
+            <button id="site-search-btn" onclick="performSearch()">بحث</button>
+        </div>
+        <div class="site-actions">
+            <button id="cart-btn" class="cart-btn" onclick="openCart()">سلة (<span id="cart-count">0</span>)</button>
+        </div>
+    </header>
+
+    <!-- Cart drawer (hidden by default) -->
+    <aside id="cart-drawer" class="cart-drawer" aria-hidden="true">
+        <div class="cart-header">
+            <h3>سلة التسوّق</h3>
+            <button class="close-cart" onclick="closeCart()">✕</button>
+        </div>
+        <div class="cart-body">
+            <ul id="cart-items-list" class="cart-items"></ul>
+        </div>
+        <div class="cart-footer">
+            <div class="cart-total">المجموع: <span id="cart-total">0</span> ج.م</div>
+            <button class="btn-checkout" onclick="goToCheckout()">اكمل الشراء</button>
+        </div>
+    </aside>
+
+    <div id="welcome-screen" class="screen active"></div>
+    <div id="categories-screen" class="screen"></div>
+
+    <div id="products-screen" class="screen">
+        <header class="main-header">
+            <button class="back-btn" onclick="showScreen('categories-screen')">◄ الأقسام</button>
+            <h2 id="current-section-title">قسم المنتجات</h2>
+        </header>
+        <main class="products-grid animate-fade-in"></main>
+    </div>
+
+    <div id="checkout-screen" class="screen">
+        <header class="main-header">
+            <button class="back-btn" onclick="showScreen('products-screen')">◄ المنتجات</button>
+            <h2>تأكيد طلب الشراء</h2>
+        </header>
+        <main class="checkout-container animate-fade-in"></main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="src/lib/supabase.js"></script>
+    <script src="src/components/ProductCard.js"></script>
+    <script src="src/components/CheckoutForm.js"></script>
+    <script src="src/pages/Home.js"></script>
+    <script src="App.js"></script>
+</body>
+</html>

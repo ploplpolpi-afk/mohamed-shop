@@ -1,8 +1,8 @@
 function renderCheckoutForm() {
     return `
         <div class="checkout-card">
-            <h3>المنتج المحدد: <span id="selected-product-name" style="color: #ff5722;"></span> &nbsp;|&nbsp; الكمية: <span id="selected-product-quantity">1</span></h3>
-            <form id="order-form">
+            <h3>المنتج المحدد: <span id="selected-product-name" style="color: #ff5722;"></span>  |  الكمية: <span id="selected-product-quantity">1</span></h3>
+            <form id="order-form" onsubmit="handleOrderSubmit(event)">
                 <div class="form-group">
                     <label>اختر المقاس:</label>
                     <select id="size" required>
@@ -56,6 +56,7 @@ async function handleOrderSubmit(e) {
     const rawProductName = document.getElementById('selected-product-raw-name').value || document.getElementById('selected-product-name').textContent;
     const price = Number(document.getElementById('selected-product-price').value || '0');
     const quantity = Number(document.getElementById('selected-product-quantity-hidden').value || document.getElementById('selected-product-quantity').textContent || '1');
+    
     const orderData = {
         productName: rawProductName,
         displayName: document.getElementById('selected-product-name').textContent,
@@ -68,99 +69,72 @@ async function handleOrderSubmit(e) {
         address: document.getElementById('client-address').value
     };
 
-    // optional lat/lon
     const lat = document.getElementById('client-lat').value || null;
     const lon = document.getElementById('client-lon').value || null;
-
 
     const submitBtn = document.querySelector('.btn-submit');
     submitBtn.textContent = "جاري حفظ وإرسال طلبك...";
     submitBtn.disabled = true;
 
-    console.log('handleOrderSubmit', {
-        orderData,
-        lat,
-        lon,
-        hasSupabaseClient: typeof window.supabaseClient !== 'undefined' && window.supabaseClient,
-        hasCreateOrder: typeof window.createOrder === 'function'
-    });
+    // تجهيز الداتا للـ JSON الخاص بالمنتجات
+    const cartItemsArray = [{
+        name: orderData.productName,
+        price: orderData.price,
+        quantity: orderData.quantity,
+        size: orderData.size,
+        payment_method: orderData.payment,
+        latitude: lat,
+        longitude: lon
+    }];
+
+    const totalPriceCalc = orderData.price * orderData.quantity;
 
     try {
         if (typeof window.supabaseClient !== 'undefined' && window.supabaseClient) {
+            // الرفع للجدول الجديد بالأسماء المطابقة بالملّي لقاعدة البيانات
             const { data, error } = await window.supabaseClient
                 .from('orders')
                 .insert([
                     {
-                        items: [{
-                            name: orderData.productName,
-                            price: orderData.price,
-                            quantity: orderData.quantity,
-                            size: orderData.size,
-                            payment_method: orderData.payment
-                        }],
-                        total: orderData.price * orderData.quantity,
-                        status: 'pending',
-                        shipping_address: {
-                            address: orderData.address,
-                            phone: orderData.phone,
-                            lat: lat,
-                            lon: lon
-                        },
-                        metadata: {
-                            client_name: orderData.name,
-                            payment_method: orderData.payment
-                        },
-                        created_at: new Date().toISOString()
+                        customer_name: orderData.name,
+                        customer_phone: orderData.phone,
+                        customer_address: orderData.address,
+                        cart_items: cartItemsArray,
+                        total_price: totalPriceCalc,
+                        order_status: 'قيد المراجعة'
                     }
                 ]);
+                
             if (error) throw error;
-            console.log('Supabase insert response', data);
-            submitBtn.textContent = "تم الحفظ! جاري فتح واتساب...";
-        } else if (typeof window.createOrder === 'function') {
-            await window.createOrder({
-                items: [{
-                    name: orderData.productName,
-                    price: orderData.price,
-                    quantity: orderData.quantity,
-                    size: orderData.size,
-                    payment_method: orderData.payment
-                }],
-                total: orderData.price * orderData.quantity,
-                status: 'pending',
-                shipping_address: {
-                    address: orderData.address,
-                    phone: orderData.phone,
-                    lat: lat,
-                    lon: lon
-                },
-                metadata: {
-                    client_name: orderData.name,
-                    payment_method: orderData.payment
-                },
-                created_at: new Date().toISOString()
-            });
+            console.log('تم الحفظ في Supabase:', data);
             submitBtn.textContent = "تم الحفظ! جاري فتح واتساب...";
         } else {
-            console.warn('Supabase client غير متاح؛ تم تجاوز حفظ الطلب.');
-            submitBtn.textContent = "جاري فتح واتساب...";
+            console.warn('سوبابيز كلاينت مش متاح، هيتم فتح الواتساب مباشرة.');
         }
     } catch (err) {
-        console.error('order submit error', err);
-        alert("حدث خطأ في السيرفر: " + (err.message || err));
+        console.error('خطأ أثناء رفع الطلب:', err);
+        alert("حدث خطأ أثناء حفظ الطلب في قاعدة البيانات: " + (err.message || err));
         submitBtn.textContent = "تأكيد وإرسال الطلب";
         submitBtn.disabled = false;
         return;
     }
 
-    const message = `طلب شراء جديد لبراند الملابس:\n\n` +
-                    `📦 المنتج: ${orderData.productName}\n` +
-                    `📏 المقاس: ${orderData.size}\n` +
-                    `💳 طريقة الدفع: ${orderData.payment}\n\n` +
-                    `👤 اسم العميل: ${orderData.name}\n` +
-                    `📞 رقم الهاتف: ${orderData.phone}\n` +
-                    `📍 العنوان: ${orderData.address}`;
+    // تجهيز رسالة الواتساب للعميل
+    let message = `*طلب شراء جديد من متجر محمد شوب* 🛒\n\n` +
+                  `📦 *المنتج:* ${orderData.productName}\n` +
+                  `📏 *المقاس:* ${orderData.size}\n` +
+                  `🔢 *الكمية:* ${orderData.quantity}\n` +
+                  `💰 *الحساب الإجمالي:* ${totalPriceCalc} ج.م\n` +
+                  `💳 *طريقة الدفع:* ${orderData.payment}\n\n` +
+                  `👤 *اسم العميل:* ${orderData.name}\n` +
+                  `📞 *رقم الهاتف:* ${orderData.phone}\n` +
+                  `📍 *العنوان:* ${orderData.address}`;
 
-    const myWhatsAppNumber = "201000000000"; // ضع رقم واتسابك الحقيقي
+    if (lat && lon) {
+        message += `\n🗺️ *موقع العميل:* https://maps.google.com/?q=${lat},${lon}`;
+    }
+
+    const myWhatsAppNumber = "201016544975"; 
     const whatsappUrl = `https://wa.me/${myWhatsAppNumber}?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, '_blank');
 
@@ -177,7 +151,6 @@ if (typeof window !== 'undefined') {
 
 // --- Location picker (Leaflet) ---
 async function openLocationPicker() {
-    // load leaflet if needed
     if (!window.L) {
         const css = document.createElement('link'); css.rel = 'stylesheet'; css.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'; document.head.appendChild(css);
         await new Promise((res, rej) => {
@@ -185,7 +158,6 @@ async function openLocationPicker() {
         });
     }
 
-    // create modal container
     let modal = document.getElementById('location-picker-modal');
     if (modal) modal.remove();
     modal = document.createElement('div'); modal.id = 'location-picker-modal'; modal.className = 'product-modal';
@@ -201,7 +173,7 @@ async function openLocationPicker() {
         </div>`;
     document.body.appendChild(modal);
 
-    const map = L.map('lp-map').setView([30.0444,31.2357], 12); // default to Cairo
+    const map = L.map('lp-map').setView([30.0444,31.2357], 12);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
 
     let marker;
@@ -214,9 +186,10 @@ async function openLocationPicker() {
     }
 
     map.on('click', (e) => setMarker(e.latlng));
-
-    // try geolocation to center map
     if (navigator.geolocation) navigator.geolocation.getCurrentPosition(p => map.setView([p.coords.latitude, p.coords.longitude], 14), () => {});
 
-    document.getElementById('lp-confirm').addEventListener('click', () => { document.getElementById('location-picker-modal')?.remove(); showSnack('تم اختيار الموقع'); });
+    document.getElementById('lp-confirm').addEventListener('click', () => { 
+        document.getElementById('location-picker-modal')?.remove(); 
+        if(typeof showSnack === 'function') showSnack('تم اختيار الموقع'); 
+    });
 }

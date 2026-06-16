@@ -49,7 +49,6 @@ function renderCheckoutForm() {
     `;
 }
 
-// دالة التعامل مع إرسال الفورم وحفظها في السيرفر والواتساب
 async function handleOrderSubmit(e) {
     e.preventDefault();
     
@@ -76,7 +75,6 @@ async function handleOrderSubmit(e) {
     submitBtn.textContent = "جاري حفظ وإرسال طلبك...";
     submitBtn.disabled = true;
 
-    // تجهيز الداتا للـ JSON الخاص بالمنتجات
     const cartItemsArray = [{
         name: orderData.productName,
         price: orderData.price,
@@ -90,8 +88,8 @@ async function handleOrderSubmit(e) {
     const totalPriceCalc = orderData.price * orderData.quantity;
 
     try {
-        if (typeof window.supabaseClient !== 'undefined' && window.supabaseClient) {
-            // الرفع للجدول الجديد بالأسماء المطابقة بالملّي لقاعدة البيانات
+        // الاعتماد الكلي والمباشر على الـ window لمنع أي تعليق
+        if (window.supabaseClient) {
             const { data, error } = await window.supabaseClient
                 .from('orders')
                 .insert([
@@ -106,20 +104,16 @@ async function handleOrderSubmit(e) {
                 ]);
                 
             if (error) throw error;
-            console.log('تم الحفظ في Supabase:', data);
-            submitBtn.textContent = "تم الحفظ! جاري فتح واتساب...";
+            console.log('تم الحفظ بنجاح:', data);
         } else {
-            console.warn('سوبابيز كلاينت مش متاح، هيتم فتح الواتساب مباشرة.');
+            console.warn('supabaseClient غير معرف على الـ window حالياً');
         }
     } catch (err) {
-        console.error('خطأ أثناء رفع الطلب:', err);
-        alert("حدث خطأ أثناء حفظ الطلب في قاعدة البيانات: " + (err.message || err));
-        submitBtn.textContent = "تأكيد وإرسال الطلب";
-        submitBtn.disabled = false;
-        return;
+        console.error('خطأ السيرفر:', err);
+        alert("فشل الحفظ في القاعدة، لكن سيتم فتح الواتساب: " + (err.message || err));
     }
 
-    // تجهيز رسالة الواتساب للعميل
+    // تجهيز رسالة الواتساب وتصحيح رابط الخريطة
     let message = `*طلب شراء جديد من متجر محمد شوب* 🛒\n\n` +
                   `📦 *المنتج:* ${orderData.productName}\n` +
                   `📏 *المقاس:* ${orderData.size}\n` +
@@ -136,6 +130,8 @@ async function handleOrderSubmit(e) {
 
     const myWhatsAppNumber = "201016544975"; 
     const whatsappUrl = `https://wa.me/${myWhatsAppNumber}?text=${encodeURIComponent(message)}`;
+    
+    // فتح الواتساب فوراً
     window.open(whatsappUrl, '_blank');
 
     document.getElementById('order-form').reset();
@@ -149,7 +145,6 @@ if (typeof window !== 'undefined') {
     window.openLocationPicker = openLocationPicker;
 }
 
-// --- Location picker (Leaflet) ---
 async function openLocationPicker() {
     if (!window.L) {
         const css = document.createElement('link'); css.rel = 'stylesheet'; css.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'; document.head.appendChild(css);

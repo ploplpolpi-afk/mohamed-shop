@@ -1,6 +1,6 @@
 // src/lib/supabase.js
 
-// تم تصحيح الرابط بإضافة حرف الـ n ليطابق المشروع الفعلي والمفتاح
+// تم تصحيح الرابط بحرف الـ n ليطابق المشروع الفعلي والمفتاح بالكامل
 const SUPABASE_URL = "https://qsmugonirnpveactzseo.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFzbXVnb25pcm5wdmVhY3R6c2VvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE0NDU1MDUsImV4cCI6MjA5NzAyMTUwNX0.J5-dkl1_dyHnYyoC-NcFcJSMfVFgMREHhayj4Xic4OE";
 

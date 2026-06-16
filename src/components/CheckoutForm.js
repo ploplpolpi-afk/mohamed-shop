@@ -1,43 +1,61 @@
 async function handleOrderSubmit(e) {
     e.preventDefault();
     
-    const rawProductName = document.getElementById('selected-product-raw-name').value || document.getElementById('selected-product-name').textContent;
-    const price = Number(document.getElementById('selected-product-price').value || '0');
-    const quantity = Number(document.getElementById('selected-product-quantity-hidden').value || document.getElementById('selected-product-quantity').textContent || '1');
-    
+    // 1. استخراج البيانات من الفورم
     const orderData = {
-        productName: rawProductName,
-        price: price,
-        quantity: quantity,
+        productName: document.getElementById('selected-product-raw-name').value || document.getElementById('selected-product-name').textContent,
+        price: Number(document.getElementById('selected-product-price').value || '0'),
+        quantity: Number(document.getElementById('selected-product-quantity-hidden').value || '1'),
         size: document.getElementById('size').value,
         payment: document.getElementById('payment').value,
         name: document.getElementById('client-name').value,
         phone: document.getElementById('client-phone').value,
-        address: document.getElementById('client-address').value
+        address: document.getElementById('client-address').value,
+        lat: document.getElementById('client-lat').value || null,
+        lon: document.getElementById('client-lon').value || null
     };
 
-    const lat = document.getElementById('client-lat').value || null;
-    const lon = document.getElementById('client-lon').value || null;
-    const totalPriceCalc = orderData.price * orderData.quantity;
+    const submitBtn = document.querySelector('.btn-submit');
+    submitBtn.textContent = "جاري الحفظ والإرسال...";
+    submitBtn.disabled = true;
 
-    // رسالة الواتساب مباشرة
-    let message = `*طلب شراء جديد من متجر محمد شوب* 🛒\n\n` +
-                  `📦 *المنتج:* ${orderData.productName}\n` +
-                  `📏 *المقاس:* ${orderData.size}\n` +
-                  `🔢 *الكمية:* ${orderData.quantity}\n` +
-                  `💰 *الحساب الإجمالي:* ${totalPriceCalc} ج.م\n` +
-                  `💳 *طريقة الدفع:* ${orderData.payment}\n\n` +
-                  `👤 *اسم العميل:* ${orderData.name}\n` +
-                  `📞 *القم الهاتف:* ${orderData.phone}\n` +
-                  `📍 *العنوان:* ${orderData.address}`;
-
-    if (lat && lon) {
-        message += `\n🗺️ *موقع العميل:* https://maps.google.com/?q=${lat},${lon}`;
+    // 2. المحاولة لرفع البيانات على Supabase
+    try {
+        if (window.supabaseClient) {
+            const { data, error } = await window.supabaseClient
+                .from('orders')
+                .insert([{
+                    customer_name: orderData.name,
+                    customer_phone: orderData.phone,
+                    customer_address: orderData.address,
+                    product_name: orderData.productName,
+                    price: orderData.price,
+                    quantity: orderData.quantity,
+                    size: orderData.size,
+                    payment_method: orderData.payment,
+                    status: 'قيد المراجعة'
+                }]);
+            
+            if (error) throw error;
+            console.log("تم الحفظ في Supabase بنجاح");
+        }
+    } catch (err) {
+        console.error("خطأ في حفظ Supabase:", err);
+        // بنكمل عادي حتى لو فشل الحفظ، عشان الزبون ميضيعش
     }
 
-    const myWhatsAppNumber = "201016544975"; 
-    const whatsappUrl = `https://wa.me/${myWhatsAppNumber}?text=${encodeURIComponent(message)}`;
+    // 3. تجهيز رسالة الواتساب
+    let message = `*طلب جديد* 🛒\n\nالمنتج: ${orderData.productName}\nالسعر: ${orderData.price * orderData.quantity} ج.م\nالاسم: ${orderData.name}\nالهاتف: ${orderData.phone}\nالعنوان: ${orderData.address}`;
     
+    if (orderData.lat && orderData.lon) {
+        message += `\nالموقع: https://www.google.com/maps?q=${orderData.lat},${orderData.lon}`;
+    }
+
+    const whatsappUrl = `https://wa.me/201016544975?text=${encodeURIComponent(message)}`;
+    
+    // 4. فتح الواتسابs
     window.open(whatsappUrl, '_blank');
+    
+    submitBtn.textContent = "تم إرسال الطلب!";
     document.getElementById('order-form').reset();
 }

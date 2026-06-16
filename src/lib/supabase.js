@@ -1,11 +1,11 @@
-// قراءة مفاتيح سوبابيز من المتصفح أو البيئة المتاحة
-const SUPABASE_URL = window.VITE_SUPABASE_URL || "https://qsmugonirpveactzseo.supabase.co";
-const SUPABASE_ANON_KEY = window.VITE_SUPABASE_ANON_KEY || "";
+import { createClient } from '@supabase/supabase-js';
 
-// إنشاء الكلاينت وتثبيته على الـ window عشان يكون متاح في كل مكان بالكود
-if (typeof window.supabase !== 'undefined') {
-    window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    console.log("✅ تم تهيئة Supabase Client بنجاح.");
-} else {
-    console.error("❌ مكتبة Supabase الخارجية لم يتم تحميلها في الـ HTML.");
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://qsmugonirpveactzseo.supabase.co";
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+// إنشاء الكلاينت الأساسي والوحيد للمتجر
+export const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY || "");
+
+if (typeof window !== 'undefined') {
+    window.supabaseClient = supabaseClient;
 }

@@ -88,7 +88,6 @@ async function handleOrderSubmit(e) {
     const totalPriceCalc = orderData.price * orderData.quantity;
 
     try {
-        // الاعتماد الكلي والمباشر على الـ window لمنع أي تعليق
         if (window.supabaseClient) {
             const { data, error } = await window.supabaseClient
                 .from('orders')
@@ -113,7 +112,6 @@ async function handleOrderSubmit(e) {
         alert("فشل الحفظ في القاعدة، لكن سيتم فتح الواتساب: " + (err.message || err));
     }
 
-    // تجهيز رسالة الواتساب وتصحيح رابط الخريطة
     let message = `*طلب شراء جديد من متجر محمد شوب* 🛒\n\n` +
                   `📦 *المنتج:* ${orderData.productName}\n` +
                   `📏 *المقاس:* ${orderData.size}\n` +
@@ -131,7 +129,6 @@ async function handleOrderSubmit(e) {
     const myWhatsAppNumber = "201016544975"; 
     const whatsappUrl = `https://wa.me/${myWhatsAppNumber}?text=${encodeURIComponent(message)}`;
     
-    // فتح الواتساب فوراً
     window.open(whatsappUrl, '_blank');
 
     document.getElementById('order-form').reset();

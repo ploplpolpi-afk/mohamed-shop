@@ -33,7 +33,7 @@ body {
     justify-content: space-between;
     gap: 12px;
     padding: 12px 15px;
-    background: #ffffff;
+    background: #ffffff !important; /* إجبار الخلفية تكون بيضاء تماماً */
     box-shadow: 0 2px 10px rgba(0,0,0,0.05);
     width: 100%;
 }
@@ -610,20 +610,21 @@ body {
     /* 2. إعادة ترتيب الهيدر بشكل رأسي متناسق */
     .site-header {
         flex-direction: column; /* ترتيب العناصر تحت بعض */
-        gap: 12px;
-        padding: 12px 15px;
+        gap: 8px;
+        padding: 10px 12px;
         width: 100%;
+        background: #ffffff !important;
     }
 
     /* توسيط اسم المتجر أو اللوجو */
     .site-brand {
-        font-size: 1.4rem;
+        font-size: 1.3rem;
         text-align: center;
         width: 100%;
         margin-bottom: 2px;
     }
 
-    /* 3. شريط البحث يملأ عرض الشاشة */
+    /* 3. شريط البحث يملأ عرض الشاشة ومحاذاته مظبوطة */
     .site-search {
         width: 100% !important;
         max-width: 100%;
@@ -632,116 +633,5 @@ body {
     }
 
     #site-search-input {
-        padding: 10px 12px;
-        font-size: 0.9rem;
-    }
-
-    #site-search-btn {
-        padding: 10px 16px;
-        font-size: 0.9rem;
-    }
-
-    /* 4. توزيع الأيقونات والأزرار (دخول، سلة) بالتساوي جمب بعض */
-    .site-actions {
-        width: 100%;
-        display: flex;
-        justify-content: space-around; /* توزيع متساوي بالملي */
-        align-items: center;
-        gap: 10px;
-        border-top: 1px solid #f1f1f1;
-        padding-top: 10px;
-        margin-top: 2px;
-    }
-
-    .site-actions button {
-        flex: 1; /* الأزرار تأخذ نفس العرض بالتساوي */
-        padding: 10px 5px;
-        font-size: 0.85rem;
-        text-align: center;
-        white-space: nowrap;
-    }
-
-    .user-label {
-        font-size: 0.8rem;
-        max-width: 90px;
-    }
-
-    /* 5. عرض كارتين منتجات جمب بعض بشكل منظم جداً */
-    .products-grid {
-        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)) !important;
-        gap: 12px;
-        padding: 12px;
-        width: 100%;
-    }
-
-    .product-card {
-        width: 100% !important;
-        margin: 0 auto;
-    }
-
-    /* تقليل حجم الصور في الموبايل ليتناسب مع الكارتين */
-    .img-container {
-        height: 190px !important;
-    }
-
-    .product-badge {
-        font-size: 0.7rem;
-        padding: 3px 8px;
-        top: 8px; right: 8px;
-    }
-
-    /* مصغرات الصور */
-    .thumb {
-        width: 35px; height: 35px;
-    }
-
-    /* تظبيط معلومات الكارت لتناسب المساحة الصغيرة */
-    .product-info {
-        padding: 10px;
-    }
-
-    .product-info h3 {
-        font-size: 0.9rem;
-        margin-bottom: 6px;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis; /* قص اسم المنتج الطويل ونقط */
-    }
-    
-    .product-info p {
-        font-size: 0.78rem;
-    }
-
-    .product-info .price {
-        font-size: 1rem;
-        margin: 6px 0;
-    }
-
-    .btn-add, .btn-order {
-        padding: 8px 4px !important;
-        font-size: 0.8rem !important;
-        margin-top: 5px;
-    }
-
-    /* تظبيط السلة على مقاس الموبايل */
-    .cart-drawer {
-        width: 100%;
-        left: -100%;
-    }
-    .cart-drawer.open {
-        left: 0;
-    }
-
-    /* تظبيط الفريمات والحاويات */
-    .checkout-container, .auth-container {
-        padding: 20px 15px;
-        margin: 0 auto 20px auto;
-        border-radius: 8px;
-    }
-}
-
-@media (max-width: 480px) {
-    .main-header h2 { font-size: 1.3rem; }
-    .category-card { height: 160px; }
-    .card-text h3 { font-size: 1.4rem; }
-}
+        padding: 8px 12px;
+        font-size:

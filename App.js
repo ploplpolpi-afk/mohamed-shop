@@ -23,6 +23,121 @@ function toggleSubMenu(menuId) {
     }
 }
 
+function openAuthScreen() {
+    showScreen('auth-screen');
+    renderAuthScreen();
+}
+
+function updateAuthUI(user) {
+    currentUser = user;
+    const authBtn = document.getElementById('auth-btn');
+    const userLabel = document.getElementById('user-label');
+    if(authBtn) {
+        authBtn.textContent = user ? 'حسابي' : 'دخول';
+    }
+    if(userLabel) {
+        userLabel.textContent = user ? `مرحباً، ${user.email}` : '';
+    }
+    if(document.getElementById('auth-screen')?.classList.contains('active')) {
+        renderAuthScreen();
+    }
+}
+
+async function refreshAuthState() {
+    if(!window.supabaseClient?.auth) return;
+    const { data } = await window.supabaseClient.auth.getSession();
+    const user = data?.session?.user || null;
+    updateAuthUI(user);
+}
+
+async function handleAuthSubmit(event, mode) {
+    event.preventDefault();
+    const form = document.getElementById('auth-form');
+    if(!form) return;
+    const email = document.getElementById('auth-email')?.value.trim();
+    const password = document.getElementById('auth-password')?.value;
+    if(!email || !password) {
+        return showSnack('اكتب البريد وكلمة المرور');
+    }
+    const button = event.target.closest('button');
+    const originalText = button?.textContent || '';
+    if(button) button.disabled = true;
+
+    try {
+        let result;
+        if(mode === 'signup') {
+            result = await window.supabaseClient.auth.signUp({ email, password });
+        } else {
+            result = await window.supabaseClient.auth.signInWithPassword({ email, password });
+        }
+
+        if(result.error) throw result.error;
+        await refreshAuthState();
+
+        if(mode === 'signup') {
+            showSnack('تم إنشاء الحساب. تحقق من بريدك إذا كان مطلوباً.');
+        } else {
+            showSnack('تم تسجيل الدخول بنجاح');
+            showScreen('categories-screen');
+        }
+    } catch (err) {
+        console.error('Auth error:', err);
+        showSnack(err?.message || 'حدث خطأ أثناء التسجيل');
+    } finally {
+        if(button) {
+            button.disabled = false;
+            button.textContent = originalText;
+        }
+    }
+}
+
+async function signOutUser() {
+    if(!window.supabaseClient?.auth) return;
+    await window.supabaseClient.auth.signOut();
+    updateAuthUI(null);
+    showSnack('تم تسجيل الخروج');
+    showScreen('categories-screen');
+}
+
+function renderAuthScreen() {
+    const container = document.querySelector('.auth-container');
+    if(!container) return;
+    if(currentUser) {
+        container.innerHTML = `
+            <div class="auth-card">
+                <h3>حسابك</h3>
+                <p>البريد الإلكتروني: <strong>${currentUser.email}</strong></p>
+                <p>يمكنك متابعة التسوق أو تسجيل الخروج.</p>
+                <div class="auth-actions">
+                    <button class="btn-primary" onclick="showScreen('categories-screen')">متابعة التسوق</button>
+                    <button class="btn-order primary" onclick="signOutUser()">تسجيل الخروج</button>
+                </div>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = `
+        <div class="auth-card">
+            <p class="auth-note">سجل الدخول أو أنشئ حساب جديد باستخدام البريد الإلكتروني وكلمة المرور.</p>
+            <form id="auth-form" onsubmit="handleAuthSubmit(event,'login')">
+                <div class="form-group">
+                    <label>البريد الإلكتروني</label>
+                    <input type="email" id="auth-email" placeholder="مثال: name@example.com" required>
+                </div>
+                <div class="form-group">
+                    <label>كلمة المرور</label>
+                    <input type="password" id="auth-password" placeholder="أدخل كلمة المرور" minlength="6" required>
+                </div>
+                <div class="auth-actions">
+                    <button type="submit" class="btn-submit">دخول</button>
+                    <button type="button" class="btn-primary" onclick="handleAuthSubmit(event,'signup')">تسجيل جديد</button>
+                </div>
+            </form>
+        </div>
+    `;
+}
+
 // دالة فتح صفحة المنتجات المربعات
 function openProductPage(sectionName) {
     document.getElementById('current-section-title').textContent = sectionName;
@@ -163,6 +278,7 @@ function performSearch() {
 }
 
 let _suggestDeb; 
+let currentUser = null;
 function setupSearchSuggest() {
     const input = document.getElementById('site-search-input');
     const sugg = document.getElementById('search-suggestions');
@@ -320,6 +436,7 @@ function removeFromCart(idx) {
 function goToCheckout() {
     closeCart();
     if(CART.items.length === 0) { showSnack('السلة فارغة'); return; }
+    if(!currentUser) { showSnack('يجب تسجيل الدخول أولاً'); openAuthScreen(); return; }
     ensureCheckoutFormRendered();
 
     const productNameEl = document.getElementById('selected-product-name');
@@ -477,6 +594,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const checkoutContainer = document.querySelector('.checkout-container');
     if(checkoutContainer && typeof renderCheckoutForm === 'function') {
         checkoutContainer.innerHTML = renderCheckoutForm();
+    }
+
+    // رصد حالة المصادقة للمستخدم عند التحميل
+    refreshAuthState();
+    if(window.supabaseClient?.auth?.onAuthStateChange) {
+        window.supabaseClient.auth.onAuthStateChange((_event, session) => {
+            const user = session?.user || null;
+            updateAuthUI(user);
+            if(user) showSnack('مرحباً بعودتك');
+        });
     }
 
     // إخفاء الهيدر لو الشاشة الافتتاحية هي النشطة

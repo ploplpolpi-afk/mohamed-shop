@@ -19,6 +19,8 @@
             <button id="site-search-btn" onclick="performSearch()">بحث</button>
         </div>
         <div class="site-actions">
+            <span id="user-label" class="user-label"></span>
+            <button id="auth-btn" class="auth-btn" onclick="openAuthScreen()">دخول</button>
             <button id="cart-btn" class="cart-btn" onclick="openCart()">سلة (<span id="cart-count">0</span>)</button>
         </div>
     </header>
@@ -54,6 +56,14 @@
             <h2>تأكيد طلب الشراء</h2>
         </header>
         <main class="checkout-container animate-fade-in"></main>
+    </div>
+
+    <div id="auth-screen" class="screen">
+        <header class="main-header">
+            <button class="back-btn" onclick="showScreen('categories-screen')">◄ الأقسام</button>
+            <h2>تسجيل الدخول</h2>
+        </header>
+        <main class="auth-container animate-fade-in"></main>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>

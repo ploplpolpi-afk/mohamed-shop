@@ -1,4 +1,13 @@
-// src/components/CheckoutForm.js
+﻿// src/components/CheckoutForm.js
+
+function readFileAsBase64(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(new Error('فشل تحويل صورة التحويل'));
+        reader.readAsDataURL(file);
+    });
+}
 
 function readFileAsBase64(file) {
     return new Promise((resolve, reject) => {

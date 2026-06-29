@@ -29,19 +29,19 @@ function renderCategoriesScreen() {
             </div>
             <div id="men-sub" class="sub-menu-dropdown">
                 <button class="sub-item animate-card" onclick="openProductPage('تشرتات رجالى')">
-                    <img src="https://images.unsplash.com/photo-1512436991641-6745cdb1723f?auto=format&fit=crop&w=300&q=80" alt="تشرتات" loading="lazy" onerror="this.onerror=null;this.src='${fallbackImg}'">
+                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTx0XzbT8kDJpQxwpTrD6LAKp74UO7OCu6__ByyGEQ4fUHmihUW4AIYLfUM&s=10" alt="تشرتات" loading="lazy" onerror="this.onerror=null;this.src='${fallbackImg}'">
                     <span>تشرتات</span>
                 </button>
                 <button class="sub-item animate-card" onclick="openProductPage('هوديز رجالى')">
-                    <img src="https://images.unsplash.com/photo-1544161515-4abf2c3f2d6a?auto=format&fit=crop&w=300&q=80" alt="هوديز" loading="lazy" onerror="this.onerror=null;this.src='${fallbackImg}'">
+                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRmdSvDFpEqFEpEG5iBvEDa7eWDy4bmhnGA_mwdyTJYeAOaUW5a1DB61A5N&s=10" alt="هوديز" loading="lazy" onerror="this.onerror=null;this.src='${fallbackImg}'">
                     <span>هوديز</span>
                 </button>
                 <button class="sub-item animate-card" onclick="openProductPage('بنطلونات رجالى')">
-                    <img src="https://images.unsplash.com/photo-1541099649105-f69ad21f3246?auto=format&fit=crop&w=300&q=80" alt="بناطيل" loading="lazy" onerror="this.onerror=null;this.src='${fallbackImg}'">
+                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRtaVQMpuA_086We4-MHK9seNOO_YFED2nj9aUlrsiuIg&s=10" alt="بناطيل" loading="lazy" onerror="this.onerror=null;this.src='${fallbackImg}'">
                     <span>بناطيل</span>
                 </button>
                 <button class="sub-item animate-card" onclick="openProductPage('ترنجات رجالى')">
-                    <img src="https://images.unsplash.com/photo-1517649763962-0c623066013b?auto=format&fit=crop&w=300&q=80" alt="ترنجات" loading="lazy" onerror="this.onerror=null;this.src='${fallbackImg}'">
+                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRqCePrvCS4wPO0agge5BBCRSFN3c2b-NfAFpjA-2IaHG7MWvjbwxbvM1s&s=10" alt="ترنجات" loading="lazy" onerror="this.onerror=null;this.src='${fallbackImg}'">
                     <span>ترنجات</span>
                 </button>
             </div>
@@ -57,19 +57,19 @@ function renderCategoriesScreen() {
             </div>
             <div id="women-sub" class="sub-menu-dropdown">
                 <button class="sub-item animate-card" onclick="openProductPage('تشرتات حريمى')">
-                    <img src="https://images.unsplash.com/photo-1520975916032-6b3cc4e3c2b1?auto=format&fit=crop&w=300&q=80" alt="تشرتات" loading="lazy" onerror="this.onerror=null;this.src='${fallbackImg}'">
+                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSNtncZH6wrv8iPmIKDQia9OtKlGF7N1p9ZTk7V0WFJavYUDDhQZykqDTa6&s=10" alt="تشرتات" loading="lazy" onerror="this.onerror=null;this.src='${fallbackImg}'">
                     <span>تشرتات</span>
                 </button>
                 <button class="sub-item animate-card" onclick="openProductPage('بناطيل حريمى')">
-                    <img src="https://images.unsplash.com/photo-1520975922398-7d1bd1efb3c9?auto=format&fit=crop&w=300&q=80" alt="بناطيل" loading="lazy" onerror="this.onerror=null;this.src='${fallbackImg}'">
+                    <img src="https://p.globalsources.com/IMAGES/PDT/S1222010627/petite-women-s-cargo-pants.png?ver=6063515456" alt="بناطيل" loading="lazy" onerror="this.onerror=null;this.src='${fallbackImg}'">
                     <span>بناطيل</span>
                 </button>
                 <button class="sub-item animate-card" onclick="openProductPage('بلوزات حريمى')">
-                    <img src="https://images.unsplash.com/photo-1531123414780-f0b8a1b1d2a8?auto=format&fit=crop&w=300&q=80" alt="بلوزات" loading="lazy" onerror="this.onerror=null;this.src='${fallbackImg}'">
+                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQQZaf8rAl-eeKpDlTmBNZrfEaRVAKsNqVcUcqz0cO_7kE51oEPyPOW5rhq&s=10" alt="بلوزات" loading="lazy" onerror="this.onerror=null;this.src='${fallbackImg}'">
                     <span>بلوزات</span>
                 </button>
                 <button class="sub-item animate-card" onclick="openProductPage('دراسات حريمى')">
-                    <img src="https://images.unsplash.com/photo-1514996937319-344454492b37?auto=format&fit=crop&w=300&q=80" alt="دراسات" loading="lazy" onerror="this.onerror=null;this.src='${fallbackImg}'">
+                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS8Jkf57JsmDoqBZHI6H-Gt3E2eN30Q3zlZKHJcZYw2UcCi36aZJ-ldDOeK&s=10" alt="دراسات" loading="lazy" onerror="this.onerror=null;this.src='${fallbackImg}'">
                     <span>دراسات</span>
                 </button>
             </div>

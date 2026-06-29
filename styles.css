@@ -18,9 +18,12 @@ body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background-color: #faf9f6;
     color: #222;
+<<<<<<< HEAD
     min-height: 100vh;
     min-height: 100dvh;
     line-height: 1.5;
+=======
+>>>>>>> 64d3085b0876dbe6ce3aea751e31a6afe5b45714
 }
 
 /* ==========================================================================
@@ -41,6 +44,7 @@ body {
     width: 100%;
     flex-wrap: wrap; /* يسمح بنزول السيرش سطر جديد على الشاشات الصغيرة جداً لحماية السلة */
 }
+<<<<<<< HEAD
 
 .site-brand { 
     font-weight: 900; 
@@ -153,6 +157,92 @@ body {
     font-size: 1rem;
 }
 
+=======
+
+.site-brand { 
+    font-weight: 900; 
+    font-size: 1.2rem; 
+    color: #4a2b2b; 
+    white-space: nowrap;
+}
+
+.site-search { 
+    flex: 1; 
+    display: flex; 
+    max-width: 720px; 
+    margin: 0 8px; 
+    min-width: 140px; /* تمنع السيرش من سحق باقي العناصر */
+}
+
+@media (max-width: 500px) {
+    .site-header {
+        padding: 10px;
+    }
+    .site-search {
+        order: 3; /* ينزل السيرش في سطر لوحده تحت البراند والسلة عشان ميزقش السلة بره */
+        flex: auto;
+        width: 100%;
+        margin: 8px 0 0 0;
+    }
+}
+
+.site-search input { 
+    flex: 1; 
+    padding: 10px 12px; 
+    border-radius: 0 6px 6px 0; /* متوافق مع اتجاه RTL */
+    border: 1px solid #ddd; 
+    font-size: 0.95rem; 
+    min-width: 50px;
+}
+
+.site-search button { 
+    background: #ff9900; 
+    border: none; 
+    padding: 10px 14px; 
+    border-radius: 6px 0 0 6px; /* متوافق مع اتجاه RTL */
+    cursor: pointer; 
+    color: #2b2b2b; 
+    font-weight: 700; 
+}
+
+.search-suggestions { 
+    position: absolute; 
+    right: 0; 
+    left: 0; 
+    top: 44px; 
+    background: #fff; 
+    border: 1px solid #eee; 
+    box-shadow: 0 8px 20px rgba(0,0,0,0.06); 
+    border-radius: 8px; 
+    max-height: 240px; 
+    overflow: auto; 
+    z-index: 1500; 
+    display: none; 
+}
+
+.search-suggestions.open { display: block; }
+.search-suggestions button { display: block; width: 100%; text-align: right; padding: 10px 12px; border: none; background: none; cursor: pointer; font-size: 0.98rem; }
+.search-suggestions button:hover { background: rgba(255,87,34,0.04); }
+
+.site-actions { 
+    display: flex; 
+    gap: 8px; 
+    align-items: center; 
+    flex-shrink: 0; /* تمنع انكماش زرار السلة نهائياً */
+}
+
+.cart-btn { 
+    background: #111; 
+    color: #fff; 
+    border: none; 
+    padding: 8px 14px; 
+    border-radius: 6px; 
+    cursor: pointer; 
+    white-space: nowrap; 
+    font-weight: 600;
+}
+
+>>>>>>> 64d3085b0876dbe6ce3aea751e31a6afe5b45714
 /* ==========================================================================
    3. كروت المنتجات والتقييمات
    ========================================================================== */
@@ -167,9 +257,14 @@ body {
 .card-action { background: rgba(255,255,255,0.92); border-radius: 8px; padding: 8px; box-shadow: 0 6px 18px rgba(0,0,0,0.08); cursor: pointer; border: none; }
 .card-action:hover { transform: translateY(-4px); }
 
+<<<<<<< HEAD
 /* تعديل لون الزرار للأبيض الفاتح بناءً على طلبك */
 .btn-add { width: 100%; background: #f8f9fa; color: #333; border: none; padding: 12px; font-weight: 800; border-radius: 8px; margin-top: 8px; cursor: pointer; }
 .btn-add:hover { background: #e2e6ea; }
+=======
+.btn-add { width: 100%; background: #ffd814; color: #111; border: none; padding: 12px; font-weight: 800; border-radius: 8px; margin-top: 8px; cursor: pointer; }
+.btn-add:hover { background: #ffcf4d; }
+>>>>>>> 64d3085b0876dbe6ce3aea751e31a6afe5b45714
 
 /* ==========================================================================
    4. التنبيهات المنبثقة (Toast/Snackbar)
@@ -273,9 +368,12 @@ body {
     align-items: center;
     text-align: center;
     width: 100%;
+<<<<<<< HEAD
     min-height: 100vh;
     min-height: 100dvh;
     padding: 20px;
+=======
+>>>>>>> 64d3085b0876dbe6ce3aea751e31a6afe5b45714
 }
 
 .welcome-content h1 {
@@ -372,6 +470,7 @@ body {
     border-radius: 0 0 20px 20px;
     margin-top: -15px;
     margin-bottom: 20px;
+<<<<<<< HEAD
     box-shadow: 0 4px 18px rgba(0,0,0,0.06);
     transition: max-height 0.35s ease-out, padding 0.35s ease;
     display: grid;
@@ -382,11 +481,23 @@ body {
 .sub-menu-dropdown.open {
     max-height: 720px;
     padding: 16px 15px 18px;
+=======
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    transition: max-height 0.3s ease-out, padding 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    padding: 0 15px;
+}
+.sub-menu-dropdown.open {
+    max-height: 400px;
+    padding: 10px 15px;
+>>>>>>> 64d3085b0876dbe6ce3aea751e31a6afe5b45714
     border: 1px solid #eee;
     border-top: none;
 }
 
 .sub-menu-dropdown button {
+<<<<<<< HEAD
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -413,6 +524,24 @@ body {
 .sub-item span { width: 100%; color: #1d1d1d; font-weight: 700; font-size: 0.95rem; }
 .sub-item:hover { background: transparent; }
 
+=======
+    background: none;
+    border: none;
+    padding: 12px 10px;
+    text-align: right;
+    font-size: 1rem;
+    cursor: pointer;
+    border-bottom: 1px solid #fafafa;
+    transition: color 0.18s, padding-right 0.18s;
+}
+.sub-menu-dropdown button:hover { color: #ff5722; padding-right: 15px; }
+
+.sub-item { display: flex; align-items: center; gap: 12px; padding: 10px 12px; text-align: right; }
+.sub-item img { width: 54px; height: 54px; object-fit: cover; border-radius: 10px; flex-shrink: 0; }
+.sub-item span { flex: 1; color: #333; font-weight: 600; font-size: 0.95rem; }
+.sub-item:hover { background: rgba(255,87,34,0.03); }
+
+>>>>>>> 64d3085b0876dbe6ce3aea751e31a6afe5b45714
 /* ==========================================================================
    9. شبكة المنتجات (Products Grid) متجاوبة بالكامل
    ========================================================================== */
@@ -448,6 +577,7 @@ body {
 /* تأثير الضغط الارتدادي على الأزرار */
 .btn-primary, .btn-submit, .btn-order, .btn-add { cursor: pointer; transition: all 0.2s ease; }
 .btn-primary:active, .btn-submit:active, .btn-order:active, .btn-add:active { transform: scale(0.96); }
+<<<<<<< HEAD
 
 /* ==========================================================================
    10. تحسينات العرض على الموبايل (Mobile-first polish)
@@ -620,12 +750,22 @@ body {
 .btn-primary {
     background-color: #ffe2c7;
     color: #111;
+=======
+
+.btn-primary {
+    background-color: #ff5722;
+    color: white;
+>>>>>>> 64d3085b0876dbe6ce3aea751e31a6afe5b45714
     border: none;
     padding: 14px 40px;
     font-size: 1.1rem;
     font-weight: bold;
     border-radius: 30px;
+<<<<<<< HEAD
     box-shadow: 0 4px 15px rgba(255, 152, 0, 0.18);
+=======
+    box-shadow: 0 4px 15px rgba(255,87,34,0.3);
+>>>>>>> 64d3085b0876dbe6ce3aea751e31a6afe5b45714
     max-width: 100%;
 }
 

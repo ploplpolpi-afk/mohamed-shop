@@ -2,10 +2,19 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>محمد شوب - متجر الملابس المتكامل</title>
     <meta name="google-site-verification" content="حط_الكود_بتاع_جوجل_هنا" />
     <link rel="stylesheet" href="styles.css">
+    <script>
+        (function(){
+            function setVh(){
+                document.documentElement.style.setProperty('--vh', (window.innerHeight * 0.01) + 'px');
+            }
+            setVh();
+            window.addEventListener('resize', setVh);
+        })();
+    </script>
 </head>
 <body>
 
@@ -16,12 +25,19 @@
                 <input id="site-search-input" type="search" placeholder="ابحث عن منتجات، مثال: تيشرت" aria-label="search">
                 <div id="search-suggestions" class="search-suggestions" aria-hidden="true"></div>
             </div>
-            <button id="site-search-btn" onclick="performSearch()">بحث</button>
+            <button id="site-search-btn" class="site-search-btn" onclick="performSearch()" aria-label="بحث">
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <circle cx="11" cy="11" r="6" stroke="currentColor" stroke-width="2"></circle>
+                    <path d="M20 20L16.5 16.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+                </svg>
+            </button>
         </div>
         <div class="site-actions">
-            <span id="user-label" class="user-label"></span>
-            <button id="auth-btn" class="auth-btn" onclick="openAuthScreen()">دخول</button>
-            <button id="cart-btn" class="cart-btn" onclick="openCart()">سلة (<span id="cart-count">0</span>)</button>
+            <button id="support-btn" class="support-btn" onclick="openCustomerSupport()" aria-label="خدمة العملاء">
+                <span class="support-icon">💬</span>
+                <span>خدمة العملاء</span>
+            </button>
+            <button id="cart-btn" class="cart-btn" onclick="openCart()">🛒 (<span id="cart-count">0</span>)</button>
         </div>
     </header>
 
@@ -39,8 +55,52 @@
         </div>
     </aside>
 
-    <div id="welcome-screen" class="screen active"></div>
-    <div id="categories-screen" class="screen"></div>
+    <div id="welcome-screen" class="screen active">
+        <div class="welcome-content animate-fade-in">
+            <h1>مرحبا ف متجرنا للبيع</h1>
+            <p>أفضل الخامات وأحدث الصيحات بين يديك</p>
+            <button id="start-btn" class="btn-primary" onclick="showScreen('categories-screen')">بداء</button>
+        </div>
+    </div>
+    <div id="categories-screen" class="screen">
+        <header class="main-header">
+            <button class="back-btn" onclick="showScreen('welcome-screen')">◄ الرئيسية</button>
+            <h2>اختر القسم</h2>
+            <p class="subtitle">تسوق حسب اهتمامك</p>
+        </header>
+        <main class="categories-container animate-fade-in">
+            <div class="category-card men-bg" onclick="toggleSubMenu('men-sub')">
+                <div class="card-overlay">
+                    <div class="card-text">
+                        <h3>ملابس رجالى</h3>
+                        <p>هوديز • تشرتات • بنطلونات • ترنجات</p>
+                        <span class="explore-text">تصفح القسم ◄</span>
+                    </div>
+                </div>
+            </div>
+            <div id="men-sub" class="sub-menu-dropdown">
+                <button class="sub-item" onclick="openProductPage('تشرتات رجالى')"><span>تشرتات</span></button>
+                <button class="sub-item" onclick="openProductPage('هوديز رجالى')"><span>هوديز</span></button>
+                <button class="sub-item" onclick="openProductPage('بنطلونات رجالى')"><span>بناطيل</span></button>
+                <button class="sub-item" onclick="openProductPage('ترنجات رجالى')"><span>ترنجات</span></button>
+            </div>
+            <div class="category-card women-bg" onclick="toggleSubMenu('women-sub')">
+                <div class="card-overlay">
+                    <div class="card-text">
+                        <h3>ملابس حريمى</h3>
+                        <p>تشرتات • بناطيل • بلوزات • دراسات</p>
+                        <span class="explore-text">تصفح القسم ◄</span>
+                    </div>
+                </div>
+            </div>
+            <div id="women-sub" class="sub-menu-dropdown">
+                <button class="sub-item" onclick="openProductPage('تشرتات حريمى')"><span>تشرتات</span></button>
+                <button class="sub-item" onclick="openProductPage('بناطيل حريمى')"><span>بناطيل</span></button>
+                <button class="sub-item" onclick="openProductPage('بلوزات حريمى')"><span>بلوزات</span></button>
+                <button class="sub-item" onclick="openProductPage('دراسات حريمى')"><span>دراسات</span></button>
+            </div>
+        </main>
+    </div>
 
     <div id="products-screen" class="screen">
         <header class="main-header">
@@ -56,14 +116,6 @@
             <h2>تأكيد طلب الشراء</h2>
         </header>
         <main class="checkout-container animate-fade-in"></main>
-    </div>
-
-    <div id="auth-screen" class="screen">
-        <header class="main-header">
-            <button class="back-btn" onclick="showScreen('categories-screen')">◄ الأقسام</button>
-            <h2>تسجيل الدخول</h2>
-        </header>
-        <main class="auth-container animate-fade-in"></main>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>

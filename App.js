@@ -1,3 +1,51 @@
+function openCustomerSupport() {
+    window.open('https://wa.me/201029481893?text=أريد%20المساعدة%20في%20طلب%20المنتجات%20والتوصيل', '_blank', 'noopener,noreferrer');
+}
+
+function getProductImages(productName) {
+    const name = (productName || '').toLowerCase();
+    if (name.includes('هود') || name.includes('hoodie')) {
+        return [
+            'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=900&q=80',
+            'https://images.unsplash.com/photo-1512436991641-6745cdb1723f?auto=format&fit=crop&w=900&q=80',
+            'https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=900&q=80'
+        ];
+    }
+    if (name.includes('ترنج') || name.includes('track') || name.includes('رياضي') || name.includes('سبورت')) {
+        return [
+            'https://images.unsplash.com/photo-1517649763962-0c623066013b?auto=format&fit=crop&w=900&q=80',
+            'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=900&q=80',
+            'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=900&q=80'
+        ];
+    }
+    if (name.includes('بنطل') || name.includes('جينز') || name.includes('pants')) {
+        return [
+            'https://images.unsplash.com/photo-1541099649105-f69ad21f3246?auto=format&fit=crop&w=900&q=80',
+            'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=900&q=80',
+            'https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=900&q=80'
+        ];
+    }
+    if (name.includes('فستان') || name.includes('بلوز') || name.includes('dress')) {
+        return [
+            'https://images.unsplash.com/photo-1496747611176-843222e1e57c?auto=format&fit=crop&w=900&q=80',
+            'https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=900&q=80',
+            'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=900&q=80'
+        ];
+    }
+    if (name.includes('تيشرت') || name.includes('shirt') || name.includes('ت شيرت')) {
+        return [
+            'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=900&q=80',
+            'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?auto=format&fit=crop&w=900&q=80',
+            'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=900&q=80'
+        ];
+    }
+    return [
+        'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=900&q=80',
+        'https://images.unsplash.com/photo-1512436991641-6745cdb1723f?auto=format&fit=crop&w=900&q=80',
+        'https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=900&q=80'
+    ];
+}
+
 // دالة التنقل بين الشاشات والأنيميشن الناعم
 function showScreen(screenId) {
     document.querySelectorAll('.screen').forEach(screen => {
@@ -21,121 +69,6 @@ function toggleSubMenu(menuId) {
     if(subMenu) {
         subMenu.classList.toggle('open');
     }
-}
-
-function openAuthScreen() {
-    showScreen('auth-screen');
-    renderAuthScreen();
-}
-
-function updateAuthUI(user) {
-    currentUser = user;
-    const authBtn = document.getElementById('auth-btn');
-    const userLabel = document.getElementById('user-label');
-    if(authBtn) {
-        authBtn.textContent = user ? 'حسابي' : 'دخول';
-    }
-    if(userLabel) {
-        userLabel.textContent = user ? `مرحباً، ${user.email}` : '';
-    }
-    if(document.getElementById('auth-screen')?.classList.contains('active')) {
-        renderAuthScreen();
-    }
-}
-
-async function refreshAuthState() {
-    if(!window.supabaseClient?.auth) return;
-    const { data } = await window.supabaseClient.auth.getSession();
-    const user = data?.session?.user || null;
-    updateAuthUI(user);
-}
-
-async function handleAuthSubmit(event, mode) {
-    event.preventDefault();
-    const form = document.getElementById('auth-form');
-    if(!form) return;
-    const email = document.getElementById('auth-email')?.value.trim();
-    const password = document.getElementById('auth-password')?.value;
-    if(!email || !password) {
-        return showSnack('اكتب البريد وكلمة المرور');
-    }
-    const button = event.target.closest('button');
-    const originalText = button?.textContent || '';
-    if(button) button.disabled = true;
-
-    try {
-        let result;
-        if(mode === 'signup') {
-            result = await window.supabaseClient.auth.signUp({ email, password });
-        } else {
-            result = await window.supabaseClient.auth.signInWithPassword({ email, password });
-        }
-
-        if(result.error) throw result.error;
-        await refreshAuthState();
-
-        if(mode === 'signup') {
-            showSnack('تم إنشاء الحساب. تحقق من بريدك إذا كان مطلوباً.');
-        } else {
-            showSnack('تم تسجيل الدخول بنجاح');
-            showScreen('categories-screen');
-        }
-    } catch (err) {
-        console.error('Auth error:', err);
-        showSnack(err?.message || 'حدث خطأ أثناء التسجيل');
-    } finally {
-        if(button) {
-            button.disabled = false;
-            button.textContent = originalText;
-        }
-    }
-}
-
-async function signOutUser() {
-    if(!window.supabaseClient?.auth) return;
-    await window.supabaseClient.auth.signOut();
-    updateAuthUI(null);
-    showSnack('تم تسجيل الخروج');
-    showScreen('categories-screen');
-}
-
-function renderAuthScreen() {
-    const container = document.querySelector('.auth-container');
-    if(!container) return;
-    if(currentUser) {
-        container.innerHTML = `
-            <div class="auth-card">
-                <h3>حسابك</h3>
-                <p>البريد الإلكتروني: <strong>${currentUser.email}</strong></p>
-                <p>يمكنك متابعة التسوق أو تسجيل الخروج.</p>
-                <div class="auth-actions">
-                    <button class="btn-primary" onclick="showScreen('categories-screen')">متابعة التسوق</button>
-                    <button class="btn-order primary" onclick="signOutUser()">تسجيل الخروج</button>
-                </div>
-            </div>
-        `;
-        return;
-    }
-
-    container.innerHTML = `
-        <div class="auth-card">
-            <p class="auth-note">سجل الدخول أو أنشئ حساب جديد باستخدام البريد الإلكتروني وكلمة المرور.</p>
-            <form id="auth-form" onsubmit="handleAuthSubmit(event,'login')">
-                <div class="form-group">
-                    <label>البريد الإلكتروني</label>
-                    <input type="email" id="auth-email" placeholder="مثال: name@example.com" required>
-                </div>
-                <div class="form-group">
-                    <label>كلمة المرور</label>
-                    <input type="password" id="auth-password" placeholder="أدخل كلمة المرور" minlength="6" required>
-                </div>
-                <div class="auth-actions">
-                    <button type="submit" class="btn-submit">دخول</button>
-                    <button type="button" class="btn-primary" onclick="handleAuthSubmit(event,'signup')">تسجيل جديد</button>
-                </div>
-            </form>
-        </div>
-    `;
 }
 
 // دالة فتح صفحة المنتجات المربعات
@@ -278,7 +211,6 @@ function performSearch() {
 }
 
 let _suggestDeb; 
-let currentUser = null;
 function setupSearchSuggest() {
     const input = document.getElementById('site-search-input');
     const sugg = document.getElementById('search-suggestions');
@@ -364,10 +296,22 @@ function renderCheckoutFormFallback() {
                 </div>
                 <div class="form-group">
                     <label>طريقة الدفع:</label>
-                    <select id="payment" required>
+                    <select id="payment" onchange="updatePaymentFields()" required>
                         <option value="الدفع عند الاستلام">الدفع عند الاستلام (كاش)</option>
                         <option value="فودافون كاش">تحويل فودافون كاش</option>
                     </select>
+                </div>
+                <div id="vodafone-cash-section" class="form-group" style="display:none;">
+                    <label>رقم فودافون كاش:</label>
+                    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                        <span id="vodafone-number-text" style="font-weight:700;color:#1d1d1d;">01029481893</span>
+                        <span style="color:#555;font-size:0.95rem;">بعد التحويل، ارفع صورة الإيصال</span>
+                    </div>
+                </div>
+                <div id="vodafone-upload-section" class="form-group" style="display:none;">
+                    <label>صورة تحويل فودافون كاش:</label>
+                    <input type="file" id="transfer-image" accept="image/*" capture="environment" onchange="previewTransferImage()">
+                    <div id="transfer-preview" style="margin-top:8px;color:#555;font-size:0.95rem;"></div>
                 </div>
                 <div class="form-group">
                     <label>اسم المستلم بالكامل:</label>
@@ -381,22 +325,51 @@ function renderCheckoutFormFallback() {
                     <label>العنوان بالتفصيل:</label>
                     <input type="text" id="client-address" placeholder="المحافظة - المركز - اسم الشارع" required>
                 </div>
+                <div class="form-group">
+                    <label>ملاحظات إضافية (اختياري):</label>
+                    <textarea id="additional-notes" rows="3" placeholder="اكتب أي ملاحظات يريد فريقنا معرفتها" style="width:100%;padding:12px;border-radius:8px;border:1px solid #ddd;background:#fafafa;"></textarea>
+                </div>
                 <input type="hidden" id="selected-product-price">
                 <input type="hidden" id="selected-product-quantity-hidden">
                 <input type="hidden" id="selected-product-raw-name">
+                <input type="hidden" id="client-lat">
+                <input type="hidden" id="client-lon">
                 <div class="form-group">
                     <label>تحديد الموقع على الخريطة (اختياري):</label>
                     <div style="display:flex;gap:8px;align-items:center;">
                         <button type="button" class="btn-map" onclick="openLocationPicker()">اختر على الخريطة</button>
                         <span id="picked-coords" style="color:#666;font-size:13px;">لم يتم اختيار موقع</span>
                     </div>
-                    <input type="hidden" id="client-lat">
-                    <input type="hidden" id="client-lon">
                 </div>
                 <button type="submit" class="btn-submit">تأكيد وإرسال الطلب</button>
             </form>
         </div>
     `;
+}
+
+function updatePaymentFields() {
+    const paymentMethod = document.getElementById('payment')?.value;
+    const vodafoneSection = document.getElementById('vodafone-cash-section');
+    const uploadSection = document.getElementById('vodafone-upload-section');
+    if (paymentMethod === 'فودافون كاش') {
+        if (vodafoneSection) vodafoneSection.style.display = 'block';
+        if (uploadSection) uploadSection.style.display = 'block';
+    } else {
+        if (vodafoneSection) vodafoneSection.style.display = 'none';
+        if (uploadSection) uploadSection.style.display = 'none';
+    }
+}
+
+function previewTransferImage() {
+    const input = document.getElementById('transfer-image');
+    const preview = document.getElementById('transfer-preview');
+    if (!input || !preview) return;
+    const file = input.files?.[0];
+    if (!file) {
+        preview.textContent = '';
+        return;
+    }
+    preview.textContent = `تم اختيار الملف: ${file.name}`;
 }
 
 function attachCheckoutFormListener() {
@@ -436,7 +409,6 @@ function removeFromCart(idx) {
 function goToCheckout() {
     closeCart();
     if(CART.items.length === 0) { showSnack('السلة فارغة'); return; }
-    if(!currentUser) { showSnack('يجب تسجيل الدخول أولاً'); openAuthScreen(); return; }
     ensureCheckoutFormRendered();
 
     const productNameEl = document.getElementById('selected-product-name');
@@ -594,16 +566,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const checkoutContainer = document.querySelector('.checkout-container');
     if(checkoutContainer && typeof renderCheckoutForm === 'function') {
         checkoutContainer.innerHTML = renderCheckoutForm();
-    }
-
-    // رصد حالة المصادقة للمستخدم عند التحميل
-    refreshAuthState();
-    if(window.supabaseClient?.auth?.onAuthStateChange) {
-        window.supabaseClient.auth.onAuthStateChange((_event, session) => {
-            const user = session?.user || null;
-            updateAuthUI(user);
-            if(user) showSnack('مرحباً بعودتك');
-        });
     }
 
     // إخفاء الهيدر لو الشاشة الافتتاحية هي النشطة

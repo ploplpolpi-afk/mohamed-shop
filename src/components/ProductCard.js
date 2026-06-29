@@ -1,6 +1,9 @@
 function renderProductCard(productName, type, material, price) {
-    const base = `https://via.placeholder.com/600x800?text=${encodeURIComponent(productName)}`;
-    const images = [base + "&sig=1", base + "&sig=2", base + "&sig=3"];
+    const images = typeof getProductImages === 'function' ? getProductImages(productName) : [
+        'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=900&q=80',
+        'https://images.unsplash.com/photo-1512436991641-6745cdb1723f?auto=format&fit=crop&w=900&q=80',
+        'https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=900&q=80'
+    ];
 
     // small randomization for demo: some items get 'Bestseller' badge and rating
     const badge = Math.random() > 0.6 ? 'الأكثر مبيعاً' : '';

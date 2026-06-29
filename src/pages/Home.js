@@ -3,12 +3,13 @@ function renderWelcomeScreen() {
         <div class="welcome-content animate-fade-in">
             <h1>مرحبا ف متجرنا للبيع</h1>
             <p>أفضل الخامات وأحدث الصيحات بين يديك</p>
-            <button id="start-btn" class="btn-primary" onclick="showScreen('categories-screen')">بداء</button>
+            <button id="start-btn" class="btn-primary" onclick="showScreen('categories-screen')">ابدأ</button>
         </div>
     `;
 }
 
 function renderCategoriesScreen() {
+    const fallbackImg = 'https://images.unsplash.com/photo-1491553895911-0055eca6402d?auto=format&fit=crop&w=200&q=80';
     return `
         <header class="main-header">
             <button class="back-btn" onclick="showScreen('welcome-screen')">◄ الرئيسية</button>
@@ -27,20 +28,20 @@ function renderCategoriesScreen() {
                 </div>
             </div>
             <div id="men-sub" class="sub-menu-dropdown">
-                <button class="sub-item" onclick="openProductPage('تشرتات رجالى')">
-                    <img src="https://images.unsplash.com/photo-1512436991641-6745cdb1723f?auto=format&fit=crop&w=200&q=80" alt="تشرتات">
+                <button class="sub-item animate-card" onclick="openProductPage('تشرتات رجالى')">
+                    <img src="https://images.unsplash.com/photo-1512436991641-6745cdb1723f?auto=format&fit=crop&w=300&q=80" alt="تشرتات" loading="lazy" onerror="this.onerror=null;this.src='${fallbackImg}'">
                     <span>تشرتات</span>
                 </button>
-                <button class="sub-item" onclick="openProductPage('هوديز رجالى')">
-                    <img src="https://images.unsplash.com/photo-1544161515-4abf2c3f2d6a?auto=format&fit=crop&w=200&q=80" alt="هوديز">
+                <button class="sub-item animate-card" onclick="openProductPage('هوديز رجالى')">
+                    <img src="https://images.unsplash.com/photo-1544161515-4abf2c3f2d6a?auto=format&fit=crop&w=300&q=80" alt="هوديز" loading="lazy" onerror="this.onerror=null;this.src='${fallbackImg}'">
                     <span>هوديز</span>
                 </button>
-                <button class="sub-item" onclick="openProductPage('بنطلونات رجالى')">
-                    <img src="https://images.unsplash.com/photo-1541099649105-f69ad21f3246?auto=format&fit=crop&w=200&q=80" alt="بناطيل">
+                <button class="sub-item animate-card" onclick="openProductPage('بنطلونات رجالى')">
+                    <img src="https://images.unsplash.com/photo-1541099649105-f69ad21f3246?auto=format&fit=crop&w=300&q=80" alt="بناطيل" loading="lazy" onerror="this.onerror=null;this.src='${fallbackImg}'">
                     <span>بناطيل</span>
                 </button>
-                <button class="sub-item" onclick="openProductPage('ترنجات رجالى')">
-                    <img src="https://images.unsplash.com/photo-1520962918058-9f0b7d4d1b2d?auto=format&fit=crop&w=200&q=80" alt="ترنجات">
+                <button class="sub-item animate-card" onclick="openProductPage('ترنجات رجالى')">
+                    <img src="https://images.unsplash.com/photo-1517649763962-0c623066013b?auto=format&fit=crop&w=300&q=80" alt="ترنجات" loading="lazy" onerror="this.onerror=null;this.src='${fallbackImg}'">
                     <span>ترنجات</span>
                 </button>
             </div>
@@ -55,20 +56,20 @@ function renderCategoriesScreen() {
                 </div>
             </div>
             <div id="women-sub" class="sub-menu-dropdown">
-                <button class="sub-item" onclick="openProductPage('تشرتات حريمى')">
-                    <img src="https://images.unsplash.com/photo-1520975916032-6b3cc4e3c2b1?auto=format&fit=crop&w=200&q=80" alt="تشرتات">
+                <button class="sub-item animate-card" onclick="openProductPage('تشرتات حريمى')">
+                    <img src="https://images.unsplash.com/photo-1520975916032-6b3cc4e3c2b1?auto=format&fit=crop&w=300&q=80" alt="تشرتات" loading="lazy" onerror="this.onerror=null;this.src='${fallbackImg}'">
                     <span>تشرتات</span>
                 </button>
-                <button class="sub-item" onclick="openProductPage('بناطيل حريمى')">
-                    <img src="https://images.unsplash.com/photo-1520975922398-7d1bd1efb3c9?auto=format&fit=crop&w=200&q=80" alt="بناطيل">
+                <button class="sub-item animate-card" onclick="openProductPage('بناطيل حريمى')">
+                    <img src="https://images.unsplash.com/photo-1520975922398-7d1bd1efb3c9?auto=format&fit=crop&w=300&q=80" alt="بناطيل" loading="lazy" onerror="this.onerror=null;this.src='${fallbackImg}'">
                     <span>بناطيل</span>
                 </button>
-                <button class="sub-item" onclick="openProductPage('بلوزات حريمى')">
-                    <img src="https://images.unsplash.com/photo-1531123414780-f0b8a1b1d2a8?auto=format&fit=crop&w=200&q=80" alt="بلوزات">
+                <button class="sub-item animate-card" onclick="openProductPage('بلوزات حريمى')">
+                    <img src="https://images.unsplash.com/photo-1531123414780-f0b8a1b1d2a8?auto=format&fit=crop&w=300&q=80" alt="بلوزات" loading="lazy" onerror="this.onerror=null;this.src='${fallbackImg}'">
                     <span>بلوزات</span>
                 </button>
-                <button class="sub-item" onclick="openProductPage('دراسات حريمى')">
-                    <img src="https://images.unsplash.com/photo-1514996937319-344454492b37?auto=format&fit=crop&w=200&q=80" alt="دراسات">
+                <button class="sub-item animate-card" onclick="openProductPage('دراسات حريمى')">
+                    <img src="https://images.unsplash.com/photo-1514996937319-344454492b37?auto=format&fit=crop&w=300&q=80" alt="دراسات" loading="lazy" onerror="this.onerror=null;this.src='${fallbackImg}'">
                     <span>دراسات</span>
                 </button>
             </div>

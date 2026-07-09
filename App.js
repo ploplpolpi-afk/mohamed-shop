@@ -783,6 +783,10 @@ function saveAuthAccount(method = 'phone') {
     showSnack(APP_STATE.role === 'seller' ? 'تم حفظ حساب التاجر' : 'تم حفظ حساب المشتري');
 }
 
+function simulateGoogleAuth() {
+    saveAuthAccount('google');
+}
+
 function closeSellerPanel() {
     const panel = document.getElementById('seller-panel');
     if (panel) panel.remove();

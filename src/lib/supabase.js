@@ -110,12 +110,22 @@ async function updateUserProfile(userId, updates) {
 }
 
 async function signInWithSupabase(identifier, password, options = {}) {
-    if (!window.supabaseClient) return { success: false, error: 'Supabase client not ready' };
+    const normalizedIdentifier = String(identifier || '').trim().toLowerCase();
+    if (!window.supabaseClient) {
+        const localUsers = JSON.parse(localStorage.getItem('mohamed-local-users') || '[]');
+        const existing = localUsers.find(user => String(user.email || '').toLowerCase() === normalizedIdentifier || String(user.phone || '').toLowerCase() === normalizedIdentifier);
+        if (!existing) return { success: false, error: 'not_found', message: 'لا يوجد حساب بهذا البريد أو الرقم' };
+        if (String(existing.password || '') !== String(password || '')) return { success: false, error: 'invalid_password', message: 'كلمة المرور غير صحيحة' };
+        return { success: true, user: existing, session: null, options };
+    }
     try {
-        const normalizedIdentifier = String(identifier || '').trim().toLowerCase();
         const existing = await findUserByIdentifier(normalizedIdentifier);
         if (!existing) {
-            return { success: false, error: 'not_found', message: 'لا يوجد حساب بهذا البريد أو الرقم' };
+            const localUsers = JSON.parse(localStorage.getItem('mohamed-local-users') || '[]');
+            const localExisting = localUsers.find(user => String(user.email || '').toLowerCase() === normalizedIdentifier || String(user.phone || '').toLowerCase() === normalizedIdentifier);
+            if (!localExisting) return { success: false, error: 'not_found', message: 'لا يوجد حساب بهذا البريد أو الرقم' };
+            if (String(localExisting.password || '') !== String(password || '')) return { success: false, error: 'invalid_password', message: 'كلمة المرور غير صحيحة' };
+            return { success: true, user: localExisting, session: null, options };
         }
         if (String(existing.password || '') !== String(password || '')) {
             return { success: false, error: 'invalid_password', message: 'كلمة المرور غير صحيحة' };
@@ -127,9 +137,26 @@ async function signInWithSupabase(identifier, password, options = {}) {
 }
 
 async function signUpWithSupabase(identifier, password, options = {}) {
-    if (!window.supabaseClient) return { success: false, error: 'Supabase client not ready' };
+    const normalizedIdentifier = String(identifier || '').trim().toLowerCase();
+    if (!window.supabaseClient) {
+        const localUsers = JSON.parse(localStorage.getItem('mohamed-local-users') || '[]');
+        const existing = localUsers.find(user => String(user.email || '').toLowerCase() === normalizedIdentifier || String(user.phone || '').toLowerCase() === normalizedIdentifier);
+        if (existing) return { success: false, error: 'already_exists', message: 'الحساب موجود بالفعل. استخدم تسجيل الدخول.' };
+        const isEmail = normalizedIdentifier.includes('@');
+        const record = {
+            id: `local-${Date.now()}`,
+            email: isEmail ? normalizedIdentifier : null,
+            phone: isEmail ? null : normalizedIdentifier,
+            password,
+            role: options?.role || 'buyer',
+            full_name: options?.full_name || 'مستخدم',
+            created_at: new Date().toISOString()
+        };
+        localUsers.push(record);
+        localStorage.setItem('mohamed-local-users', JSON.stringify(localUsers));
+        return { success: true, user: record, session: null, options };
+    }
     try {
-        const normalizedIdentifier = String(identifier || '').trim().toLowerCase();
         const existing = await findUserByIdentifier(normalizedIdentifier);
         if (existing) {
             return { success: false, error: 'already_exists', message: 'الحساب موجود بالفعل. استخدم تسجيل الدخول.' };
@@ -147,7 +174,22 @@ async function signUpWithSupabase(identifier, password, options = {}) {
         if (error) throw error;
         return { success: true, user: data, session: null, options };
     } catch (err) {
-        return { success: false, error: err, message: 'تعذر إنشاء الحساب الآن' };
+        const localUsers = JSON.parse(localStorage.getItem('mohamed-local-users') || '[]');
+        const existing = localUsers.find(user => String(user.email || '').toLowerCase() === normalizedIdentifier || String(user.phone || '').toLowerCase() === normalizedIdentifier);
+        if (existing) return { success: false, error: 'already_exists', message: 'الحساب موجود بالفعل. استخدم تسجيل الدخول.' };
+        const isEmail = normalizedIdentifier.includes('@');
+        const record = {
+            id: `local-${Date.now()}`,
+            email: isEmail ? normalizedIdentifier : null,
+            phone: isEmail ? null : normalizedIdentifier,
+            password,
+            role: options?.role || 'buyer',
+            full_name: options?.full_name || 'مستخدم',
+            created_at: new Date().toISOString()
+        };
+        localUsers.push(record);
+        localStorage.setItem('mohamed-local-users', JSON.stringify(localUsers));
+        return { success: true, user: record, session: null, options };
     }
 }
 

@@ -89,7 +89,13 @@ function normalizeProduct(product) {
 function persistLocalOrder(orderRecord) {
     try {
         const orders = JSON.parse(localStorage.getItem(STORAGE_KEYS.orders) || '[]');
-        orders.unshift({ ...orderRecord, createdAt: new Date().toISOString() });
+        const normalizedOrder = {
+            id: orderRecord?.id || `order-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+            status: orderRecord?.status || 'pending',
+            ...orderRecord,
+            createdAt: new Date().toISOString()
+        };
+        orders.unshift(normalizedOrder);
         localStorage.setItem(STORAGE_KEYS.orders, JSON.stringify(orders.slice(0, 50)));
         APP_STATE.orders = orders.slice(0, 50);
         persistAppState();
@@ -729,10 +735,113 @@ function toggleRoleMode() {
     }
 }
 
+function getSellerProducts() {
+    const sellerName = (APP_STATE.accountName || APP_STATE.accountPhone || 'متجر').trim();
+    return (getCatalogProducts() || []).filter(product => (product.sellerName || 'متجر') === sellerName || (APP_STATE.role === 'seller' && (product.sellerName || 'متجر').includes(sellerName)));
+}
+
+function getBuyerOrders() {
+    const buyerName = (APP_STATE.accountName || '').trim().toLowerCase();
+    const buyerPhone = (APP_STATE.accountPhone || '').trim();
+    return (APP_STATE.orders || []).filter(order => {
+        const matchName = String(order.customerName || order.client_name || '').trim().toLowerCase() === buyerName;
+        const matchPhone = String(order.customerPhone || order.client_phone || '').trim() === buyerPhone;
+        return matchName || matchPhone || (!buyerName && !buyerPhone);
+    });
+}
+
+function updateOrderStatus(orderId, nextStatus) {
+    const order = (APP_STATE.orders || []).find(item => item.id === orderId);
+    if (!order) return;
+    order.status = nextStatus;
+    persistAppState();
+    showSnack('تم تحديث حالة الطلب');
+    openAccountPanel();
+}
+
+function editSellerProduct(productId) {
+    const product = getCatalogProducts().find(item => item.id === productId);
+    if (!product) return;
+    const newPrice = Number(prompt('أدخل السعر الجديد', product.price) || product.price);
+    const newStock = Number(prompt('أدخل المخزون الجديد', product.stock) || product.stock);
+    product.price = Number(newPrice || 0);
+    product.stock = Number(newStock || 0);
+    persistAppState();
+    if (typeof window.syncProductsToSupabase === 'function') {
+        window.syncProductsToSupabase(getCatalogProducts());
+    }
+    showSnack('تم تحديث المنتج');
+    openAccountPanel();
+}
+
 function openAccountPanel() {
     closeAuthModal();
     const overlay = document.createElement('div');
     overlay.className = 'auth-modal-overlay';
+    const sellerProducts = getSellerProducts();
+    const buyerOrders = getBuyerOrders();
+    const dashboardContent = APP_STATE.role === 'seller'
+        ? `
+            <div class="account-dashboard">
+                <div class="account-section">
+                    <h4>لوحة التاجر</h4>
+                    <p>إدارة منتجاتك وتتبع الطلبات الواردة من العملاء.</p>
+                    <div class="seller-products-list">
+                        ${sellerProducts.length ? sellerProducts.map(product => `
+                            <div class="seller-product-row">
+                                <div>
+                                    <strong>${escapeHtml(product.name || 'منتج')}</strong>
+                                    <div class="muted">${escapeHtml(product.stock || 0)} قطعة • ${Number(product.price || 0)} ج.م</div>
+                                </div>
+                                <button class="btn-map" type="button" onclick="editSellerProduct('${product.id}')">تعديل</button>
+                            </div>
+                        `).join('') : '<div class="muted">لا توجد منتجات مسجلة لك بعد</div>'}
+                    </div>
+                </div>
+                <div class="account-section">
+                    <h4>طلبات التاجر</h4>
+                    <div class="seller-products-list">
+                        ${(APP_STATE.orders || []).length ? (APP_STATE.orders || []).slice(0, 6).map(order => `
+                            <div class="seller-product-row">
+                                <div>
+                                    <strong>${escapeHtml(order.customerName || order.client_name || 'عميل')}</strong>
+                                    <div class="muted">${escapeHtml(order.total || order.totalAmount || 0)} ج.م • ${escapeHtml(order.status || 'pending')}</div>
+                                </div>
+                                <div class="status-actions">
+                                    <button class="btn-map" type="button" onclick="updateOrderStatus('${order.id}', 'shipped')">شحن</button>
+                                    <button class="btn-map" type="button" onclick="updateOrderStatus('${order.id}', 'delivered')">تسليم</button>
+                                    <button class="btn-map" type="button" onclick="updateOrderStatus('${order.id}', 'reviewed')">مراجعة</button>
+                                </div>
+                            </div>
+                        `).join('') : '<div class="muted">لا توجد طلبات بعد</div>'}
+                    </div>
+                </div>
+            </div>
+        `
+        : `
+            <div class="account-dashboard">
+                <div class="account-section">
+                    <h4>لوحة المشتري</h4>
+                    <p>تابع طلباتك من الشحن إلى الاستلام والمراجعة.</p>
+                    <div class="seller-products-list">
+                        ${buyerOrders.length ? buyerOrders.map(order => `
+                            <div class="order-track-card">
+                                <div class="order-track-head">
+                                    <strong>${escapeHtml(order.productName || (order.items || []).map(item => item.name).join(', '))}</strong>
+                                    <span class="status-pill">${escapeHtml(order.status || 'pending')}</span>
+                                </div>
+                                <div class="status-steps">
+                                    <span class="status-step ${['pending','shipped','delivered','reviewed'].indexOf(order.status || 'pending') >= 0 ? 'active' : ''}">قيد التنفيذ</span>
+                                    <span class="status-step ${['shipped','delivered','reviewed'].indexOf(order.status || 'pending') >= 1 ? 'active' : ''}">تم الشحن</span>
+                                    <span class="status-step ${['delivered','reviewed'].indexOf(order.status || 'pending') >= 2 ? 'active' : ''}">تم الاستلام</span>
+                                    <span class="status-step ${order.status === 'reviewed' ? 'active' : ''}">تمت المراجعة</span>
+                                </div>
+                            </div>
+                        `).join('') : '<div class="muted">لا توجد طلبات لديك بعد</div>'}
+                    </div>
+                </div>
+            </div>
+        `;
     overlay.innerHTML = `
         <div class="auth-modal-card">
             <button class="modal-close" onclick="closeAuthModal()">✕</button>
@@ -744,6 +853,7 @@ function openAccountPanel() {
                 <div class="account-panel-row"><strong>النمط:</strong> ${escapeHtml(APP_STATE.role === 'seller' ? 'تاجر' : 'مشتري')}</div>
                 <div class="account-panel-row"><strong>طريقة الدخول:</strong> ${escapeHtml(APP_STATE.accountMethod === 'google' ? 'Google' : 'البريد/الرقم')}</div>
             </div>
+            ${dashboardContent}
             <form class="auth-form" onsubmit="event.preventDefault(); updateAccountProfile()">
                 <div class="auth-grid">
                     <input id="account-name" placeholder="الاسم" value="${escapeHtml(APP_STATE.accountName || '')}" />
@@ -883,10 +993,6 @@ function openAuthModal() {
                     <input id="auth-password" type="password" placeholder="كلمة المرور" />
                     ${AUTH_UI_MODE === 'signup' ? '<input id="auth-confirm-password" type="password" placeholder="تأكيد كلمة المرور" />' : ''}
                     ${AUTH_UI_MODE === 'signup' ? '<label class="auth-terms"><input id="auth-terms" type="checkbox" /> أوافق على الشروط والأحكام</label>' : ''}
-                    <div class="auth-role-picker">
-                        <button type="button" class="${APP_STATE.role === 'buyer' ? 'active' : ''}" onclick="setSelectedAuthRole('buyer')">مشتري</button>
-                        <button type="button" class="${APP_STATE.role === 'seller' ? 'active' : ''}" onclick="setSelectedAuthRole('seller')">تاجر</button>
-                    </div>
                 </div>
                 <div class="auth-actions">
                     <button class="btn-order primary" type="submit">${AUTH_UI_MODE === 'signup' ? 'إنشاء الحساب' : 'تسجيل الدخول'}</button>

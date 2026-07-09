@@ -590,6 +590,82 @@ body {
     border-color: transparent;
 }
 
+.account-dashboard {
+    display: grid;
+    gap: 12px;
+    margin: 12px 0 8px;
+}
+
+.account-section {
+    background: #f8fbff;
+    border: 1px solid #e5edf8;
+    border-radius: 14px;
+    padding: 12px;
+}
+
+.account-section h4 {
+    margin: 0 0 6px;
+    color: #111827;
+}
+
+.account-section p, .muted {
+    margin: 0 0 8px;
+    color: #64748b;
+    font-size: 0.92rem;
+}
+
+.seller-products-list {
+    display: grid;
+    gap: 8px;
+}
+
+.seller-product-row, .order-track-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    padding: 10px;
+    background: white;
+    border: 1px solid #edf2f7;
+    border-radius: 12px;
+}
+
+.status-actions {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.status-pill {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 999px;
+    background: #eaf4ff;
+    color: #1d4ed8;
+    font-size: 0.82rem;
+    font-weight: 700;
+}
+
+.status-steps {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+}
+
+.status-step {
+    padding: 5px 8px;
+    border-radius: 999px;
+    background: #f3f4f6;
+    color: #64748b;
+    font-size: 0.8rem;
+}
+
+.status-step.active {
+    background: #ffedd5;
+    color: #c2410c;
+}
+
 .stock-pill {
     display: inline-flex;
     align-items: center;

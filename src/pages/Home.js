@@ -76,3 +76,6 @@ function renderCategoriesScreen() {
         </main>
     `;
 }
+
+window.renderWelcomeScreen = renderWelcomeScreen;
+window.renderCategoriesScreen = renderCategoriesScreen;

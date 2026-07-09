@@ -9,15 +9,6 @@ function readFileAsBase64(file) {
     });
 }
 
-function readFileAsBase64(file) {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = () => reject(new Error('فشل تحويل صورة التحويل'));
-        reader.readAsDataURL(file);
-    });
-}
-
 async function handleOrderSubmit(e) {
     e.preventDefault();
 
@@ -73,18 +64,40 @@ async function handleOrderSubmit(e) {
     const productQty = Number(document.getElementById('selected-product-quantity-hidden')?.value || 1);
     const additionalNotes = document.getElementById('additional-notes')?.value || '';
 
+    const productId = document.getElementById('selected-product-id')?.value || '';
+    const stockValue = Number(document.getElementById('selected-product-stock')?.value || 0);
+    const sellerName = document.getElementById('selected-product-seller')?.value || 'متجر';
+    const lat = document.getElementById('client-lat')?.value || '';
+    const lon = document.getElementById('client-lon')?.value || '';
+
+    const product = productId ? (typeof window.getProductById === 'function' ? window.getProductById(productId) : null) : null;
+    const availableStock = Number(product?.stock || stockValue || 0);
+
+    if (availableStock < productQty) {
+        alert(`لا يوجد مخزون كافي لهذا المنتج حالياً، المخزون المتبقي ${availableStock}`);
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'تأكيد وإرسال الطلب';
+        }
+        return;
+    }
+
     const orderData = {
         items: [{
+            id: productId,
             name: productName,
             price: productPrice,
-            qty: productQty
+            qty: productQty,
+            seller: sellerName
         }],
         total: productPrice * productQty,
         status: 'pending',
         shipping_address: {
             full_name: name,
             phone,
-            address
+            address,
+            lat,
+            lon
         },
         metadata: {
             payment_method: paymentMethod,
@@ -95,25 +108,47 @@ async function handleOrderSubmit(e) {
     };
 
     try {
-        if (!window.supabaseClient) {
-            throw new Error('Supabase client is not initialized.');
+        if (typeof window.decreaseStockAndUpdateBalance === 'function') {
+            window.decreaseStockAndUpdateBalance(productId || (product?.id || ''), productQty);
+        }
+        if (typeof window.persistLocalOrder === 'function') {
+            window.persistLocalOrder({
+                ...orderData,
+                productId: productId || (product?.id || ''),
+                sellerName,
+                customerName: name,
+                customerPhone: phone
+            });
         }
 
-        const { data, error } = await window.supabaseClient
-            .from('orders')
-            .insert([orderData]);
+        if (typeof window.saveOrderToSupabase === 'function') {
+            await window.saveOrderToSupabase({
+                ...orderData,
+                product_id: productId || (product?.id || ''),
+                seller_name: sellerName,
+                customer_name: name,
+                customer_phone: phone,
+                created_at: new Date().toISOString()
+            });
+        }
 
-        if (error) throw error;
-
-        console.log('✅ تم حفظ الأوردر بنجاح', data);
+        console.log('✅ تم حفظ الأوردر بنجاح', orderData);
         alert('تم إرسال طلبك بنجاح!');
 
     } catch (err) {
         console.error('⛔ خطأ أثناء الإرسال:', err);
-        alert('خطأ في قاعدة البيانات: ' + err.message);
+
+        const isPermissionError = err?.code === '42501' || /row-level security|permission denied|policy/i.test(err?.message || '');
+        const friendlyMessage = isPermissionError
+            ? 'خطأ في إعدادات قاعدة البيانات: يحتاج جدول orders في Supabase إلى سياسة إدراج مسموحة لجهة anon. راجع ملف الترحيل أو لوحة Supabase.'
+            : 'خطأ في قاعدة البيانات: ' + err.message;
+
+        alert(friendlyMessage);
         if (submitBtn) {
             submitBtn.disabled = false;
             submitBtn.textContent = 'تأكيد وإرسال الطلب';
         }
     }
 }
+
+window.handleOrderSubmit = handleOrderSubmit;

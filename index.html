@@ -33,7 +33,10 @@
             </button>
         </div>
         <div class="site-actions">
-            <button id="role-toggle-btn" class="role-toggle-btn" onclick="toggleRoleMode()" aria-label="تسجيل الدخول واختيار نوع الحساب">تسجيل / دخول</button>
+            <div class="account-shell">
+                <button id="role-toggle-btn" class="role-toggle-btn" onclick="toggleRoleMode()" aria-label="تسجيل الدخول واختيار نوع الحساب">تسجيل الدخول</button>
+                <div id="account-chip" class="account-chip" style="display:none"></div>
+            </div>
             <button id="seller-add-btn" class="support-btn" onclick="openSellerPanel()" aria-label="إضافة منتج جديد">➕ إضافة منتج</button>
             <button id="support-btn" class="support-btn" onclick="openCustomerSupport()" aria-label="خدمة العملاء">
                 <span class="support-icon">💬</span>

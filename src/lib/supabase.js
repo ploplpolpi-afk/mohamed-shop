@@ -84,6 +84,71 @@ async function saveOrderToSupabase(orderData) {
     }
 }
 
+async function signInWithSupabase(identifier, password, options = {}) {
+    if (!window.supabaseClient) return { success: false, error: 'Supabase client not ready' };
+    try {
+        const normalizedIdentifier = String(identifier || '').trim().toLowerCase();
+        const { data, error } = await window.supabaseClient.from('users').select('*').or(`email.eq.${normalizedIdentifier},phone.eq.${normalizedIdentifier}`).eq('password', password).maybeSingle();
+        if (error) throw error;
+        if (!data) return { success: false, error: 'Invalid credentials' };
+        return { success: true, user: data, session: null, options };
+    } catch (err) {
+        return { success: false, error: err };
+    }
+}
+
+async function signUpWithSupabase(identifier, password, options = {}) {
+    if (!window.supabaseClient) return { success: false, error: 'Supabase client not ready' };
+    try {
+        const normalizedIdentifier = String(identifier || '').trim().toLowerCase();
+        const isEmail = normalizedIdentifier.includes('@');
+        const payload = {
+            email: isEmail ? normalizedIdentifier : null,
+            phone: isEmail ? null : normalizedIdentifier,
+            password,
+            role: options?.role || 'buyer',
+            full_name: options?.full_name || 'مستخدم',
+            created_at: new Date().toISOString()
+        };
+        const { data, error } = await window.supabaseClient.from('users').insert([payload]).select().single();
+        if (error) throw error;
+        return { success: true, user: data, session: null, options };
+    } catch (err) {
+        return { success: false, error: err };
+    }
+}
+
+async function signInWithGoogleSupabase(options = {}) {
+    if (!window.supabaseClient) return { success: false, error: 'Supabase client not ready' };
+    try {
+        const redirectTo = `${window.location.origin}${window.location.pathname}`;
+        const { data, error } = await window.supabaseClient.auth.signInWithOAuth({
+            provider: 'google',
+            options: {
+                redirectTo,
+                queryParams: { access_type: 'offline', prompt: 'consent' }
+            }
+        });
+        if (error) throw error;
+        return { success: true, redirecting: true, data, options };
+    } catch (err) {
+        return { success: false, error: err };
+    }
+}
+
+async function signOutFromSupabase() {
+    return true;
+}
+
+async function getSupabaseSessionUser() {
+    return null;
+}
+
 window.syncProductsToSupabase = syncProductsToSupabase;
 window.loadProductsFromSupabase = loadProductsFromSupabase;
 window.saveOrderToSupabase = saveOrderToSupabase;
+window.signInWithSupabase = signInWithSupabase;
+window.signUpWithSupabase = signUpWithSupabase;
+window.signInWithGoogleSupabase = signInWithGoogleSupabase;
+window.signOutFromSupabase = signOutFromSupabase;
+window.getSupabaseSessionUser = getSupabaseSessionUser;

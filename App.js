@@ -113,6 +113,7 @@ function decreaseStockAndUpdateBalance(productId, qty) {
 }
 
 const APP_STATE = loadAppState();
+let AUTH_UI_MODE = 'signin';
 
 function openCustomerSupport() {
     window.open('https://wa.me/201029481893?text=أريد%20المساعدة%20في%20طلب%20المنتجات%20والتوصيل', '_blank', 'noopener,noreferrer');
@@ -723,11 +724,29 @@ function toggleRoleMode() {
     openAuthModal();
 }
 
-function updateRoleButton() {
+function escapeHtml(value) {
+    return String(value || '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
+}
+
+function renderAccountUi() {
     const button = document.getElementById('role-toggle-btn');
+    const chip = document.getElementById('account-chip');
     if (button) {
-        button.textContent = APP_STATE.isLoggedIn ? (APP_STATE.role === 'seller' ? 'حساب التاجر' : 'حساب المشتري') : 'تسجيل / دخول';
+        button.textContent = APP_STATE.isLoggedIn ? 'تعديل الحساب' : 'تسجيل الدخول';
     }
+    if (chip) {
+        if (APP_STATE.isLoggedIn) {
+            const roleLabel = APP_STATE.role === 'seller' ? 'تاجر' : 'مشتري';
+            chip.innerHTML = `<span class="account-chip-icon">👤</span><span>${escapeHtml(APP_STATE.accountName || 'مستخدم')} · ${roleLabel}</span>`;
+            chip.style.display = 'inline-flex';
+        } else {
+            chip.style.display = 'none';
+        }
+    }
+}
+
+function updateRoleButton() {
+    renderAccountUi();
 }
 
 function openAuthModal() {
@@ -737,23 +756,35 @@ function openAuthModal() {
     overlay.innerHTML = `
         <div class="auth-modal-card">
             <button class="modal-close" onclick="closeAuthModal()">✕</button>
-            <h3>${APP_STATE.isLoggedIn ? 'تحديث الحساب' : 'إنشاء حساب أو تسجيل دخول'}</h3>
-            <p>${APP_STATE.isLoggedIn ? 'يمكنك تغيير اسم الحساب أو نوعه هنا.' : 'ادخل رقم الهاتف أو البريد ثم اختر نوع الحساب.'}</p>
-            <div class="auth-grid">
-                <input id="auth-name" placeholder="الاسم المعروض في الطلبات" value="${(APP_STATE.accountName || '').replace(/"/g, '&quot;')}" />
-                <input id="auth-phone" placeholder="رقم الهاتف أو البريد" value="${(APP_STATE.accountPhone || '').replace(/"/g, '&quot;')}" />
-                <div class="auth-role-picker">
-                    <button type="button" class="${APP_STATE.role === 'buyer' ? 'active' : ''}" onclick="setSelectedAuthRole('buyer')">مشتري</button>
-                    <button type="button" class="${APP_STATE.role === 'seller' ? 'active' : ''}" onclick="setSelectedAuthRole('seller')">تاجر</button>
+            <h3>${APP_STATE.isLoggedIn ? 'تحديث الحساب' : (AUTH_UI_MODE === 'signup' ? 'إنشاء حساب جديد' : 'تسجيل الدخول إلى المتجر')}</h3>
+            <p>${APP_STATE.isLoggedIn ? 'يمكنك تعديل بياناتك أو نوع الحساب هنا.' : 'اختر الطريقة المناسبة لك، ثم راجع الحساب الموجود أو أنشئ حسابًا جديدًا.'}</p>
+            <div class="auth-mode-toggle">
+                <button type="button" class="${AUTH_UI_MODE === 'signin' ? 'active' : ''}" onclick="toggleAuthMode('signin')">لدي حساب</button>
+                <button type="button" class="${AUTH_UI_MODE === 'signup' ? 'active' : ''}" onclick="toggleAuthMode('signup')">ليس لدي حساب</button>
+            </div>
+            <form class="auth-form" onsubmit="event.preventDefault(); saveAuthAccount('phone')">
+                <div class="auth-grid">
+                    <input id="auth-name" placeholder="الاسم المعروض في الطلبات" value="${escapeHtml(APP_STATE.accountName || '')}" />
+                    <input id="auth-email" type="email" placeholder="البريد أو رقم الهاتف" value="${escapeHtml(APP_STATE.accountPhone || '')}" />
+                    <input id="auth-password" type="password" placeholder="كلمة المرور" />
+                    <div class="auth-role-picker">
+                        <button type="button" class="${APP_STATE.role === 'buyer' ? 'active' : ''}" onclick="setSelectedAuthRole('buyer')">مشتري</button>
+                        <button type="button" class="${APP_STATE.role === 'seller' ? 'active' : ''}" onclick="setSelectedAuthRole('seller')">تاجر</button>
+                    </div>
                 </div>
-            </div>
-            <div class="auth-actions">
-                <button class="btn-order primary" onclick="saveAuthAccount()">حفظ الحساب</button>
-                <button class="btn-map" onclick="saveAuthAccount('google')">تسجيل بحساب Google</button>
-            </div>
+                <div class="auth-actions">
+                    <button class="btn-order primary" type="submit">${AUTH_UI_MODE === 'signup' ? 'إنشاء الحساب' : 'تسجيل الدخول'}</button>
+                    <button class="btn-map" type="button" onclick="saveAuthAccount('google')">اختيار حساب Google</button>
+                </div>
+            </form>
         </div>
     `;
     document.body.appendChild(overlay);
+}
+
+function toggleAuthMode(mode) {
+    AUTH_UI_MODE = mode;
+    openAuthModal();
 }
 
 function closeAuthModal() {
@@ -769,18 +800,105 @@ function setSelectedAuthRole(role) {
     updateRoleButton();
 }
 
-function saveAuthAccount(method = 'phone') {
-    const name = document.getElementById('auth-name')?.value.trim() || 'زائر';
-    const identifier = document.getElementById('auth-phone')?.value.trim() || '';
-    const normalizedIdentifier = identifier || (method === 'google' ? 'google-user@example.com' : 'phone-user');
-    APP_STATE.accountName = name;
+function getAuthDisplayName(user) {
+    return user?.full_name || user?.user_metadata?.full_name || user?.name || '';
+}
+
+function getAuthIdentifier(user, fallback = '') {
+    return user?.email || user?.phone || user?.user_metadata?.email || fallback;
+}
+
+async function finalizeAuthenticatedUser(user, method = 'phone', fallbackName = 'مستخدم', fallbackIdentifier = '') {
+    const normalizedIdentifier = getAuthIdentifier(user, fallbackIdentifier) || fallbackIdentifier || 'user@example.com';
+    const displayName = getAuthDisplayName(user) || fallbackName || 'مستخدم';
+    APP_STATE.accountName = displayName;
     APP_STATE.accountPhone = normalizedIdentifier;
     APP_STATE.accountMethod = method === 'google' ? 'google' : 'phone';
-    APP_STATE.isLoggedIn = Boolean(name && normalizedIdentifier);
+    APP_STATE.isLoggedIn = true;
+    APP_STATE.role = user?.role || APP_STATE.role || 'buyer';
     persistAppState();
     updateRoleButton();
     closeAuthModal();
-    showSnack(APP_STATE.role === 'seller' ? 'تم حفظ حساب التاجر' : 'تم حفظ حساب المشتري');
+    showSnack(APP_STATE.role === 'seller' ? 'تم تسجيل دخول التاجر بنجاح' : 'تم تسجيل الدخول بنجاح');
+}
+
+async function syncGoogleAccountFromSupabase() {
+    if (!window.supabaseClient || typeof window.supabaseClient.auth?.getSession !== 'function') return;
+    try {
+        const { data: { session }, error } = await window.supabaseClient.auth.getSession();
+        if (error || !session?.user?.email) return;
+        const email = String(session.user.email).trim().toLowerCase();
+        const { data, error: lookupError } = await window.supabaseClient.from('users').select('*').eq('email', email).maybeSingle();
+        if (lookupError) throw lookupError;
+        if (!data) {
+            const { data: created, error: insertError } = await window.supabaseClient.from('users').insert([{
+                email,
+                password: 'google-oauth',
+                role: APP_STATE.role || 'buyer',
+                full_name: session.user.user_metadata?.full_name || session.user.name || 'مستخدم',
+                created_at: new Date().toISOString()
+            }]).select().single();
+            if (insertError) throw insertError;
+            await finalizeAuthenticatedUser(created, 'google', session.user.user_metadata?.full_name || 'مستخدم', email);
+            return;
+        }
+        await finalizeAuthenticatedUser(data, 'google', data.full_name || 'مستخدم', email);
+    } catch (err) {
+        console.error('Google auth sync failed:', err);
+    }
+}
+
+async function saveAuthAccount(method = 'phone') {
+    const name = document.getElementById('auth-name')?.value.trim() || 'مستخدم';
+    const identifier = document.getElementById('auth-email')?.value.trim() || '';
+    const password = document.getElementById('auth-password')?.value.trim() || '';
+
+    if (method !== 'google' && (!identifier || !password)) {
+        showSnack('أدخل البريد أو رقم الهاتف وكلمة المرور');
+        return;
+    }
+
+    try {
+        let result;
+        if (method === 'google') {
+            result = await window.signInWithGoogleSupabase({ full_name: name, role: APP_STATE.role || 'buyer' });
+            if (result.success && result.redirecting) {
+                showSnack('سيتم تحويلك إلى Google لاختيار الحساب...');
+                return;
+            }
+        } else if (AUTH_UI_MODE === 'signup') {
+            result = await window.signUpWithSupabase(identifier, password, { full_name: name, role: APP_STATE.role || 'buyer' });
+            if (!result.success) {
+                showSnack('هذا الحساب موجود بالفعل أو لا يمكن إنشاؤه الآن');
+                return;
+            }
+        } else {
+            result = await window.signInWithSupabase(identifier, password, { full_name: name, role: APP_STATE.role || 'buyer' });
+            if (!result.success) {
+                AUTH_UI_MODE = 'signup';
+                openAuthModal();
+                showSnack('لا يوجد حساب بهذا البريد أو كلمة المرور غير صحيحة. يمكنك إنشاء حساب جديد الآن.');
+                return;
+            }
+        }
+
+        if (!result.success) throw result.error;
+
+        const user = result.user || null;
+        const normalizedIdentifier = identifier || getAuthIdentifier(user, '') || 'user@example.com';
+        APP_STATE.accountName = getAuthDisplayName(user) || name || 'مستخدم';
+        APP_STATE.accountPhone = normalizedIdentifier;
+        APP_STATE.accountMethod = method === 'google' ? 'google' : 'phone';
+        APP_STATE.isLoggedIn = Boolean(user || normalizedIdentifier);
+        APP_STATE.role = user?.role || APP_STATE.role || 'buyer';
+        persistAppState();
+        updateRoleButton();
+        closeAuthModal();
+        showSnack(APP_STATE.role === 'seller' ? 'تم تسجيل دخول التاجر بنجاح' : 'تم تسجيل الدخول بنجاح');
+    } catch (err) {
+        console.error('Supabase auth failed:', err);
+        showSnack('تعذر إكمال العملية الآن، حاول مرة أخرى');
+    }
 }
 
 function simulateGoogleAuth() {
@@ -919,13 +1037,24 @@ const APP_GLOBALS = {
     closeAuthModal,
     setSelectedAuthRole,
     saveAuthAccount,
-    simulateGoogleAuth
+    simulateGoogleAuth,
+    toggleAuthMode
 };
 Object.assign(window, APP_GLOBALS);
 
 // تشغيل ورص المكونات أول ما المتصفح يفتح
 document.addEventListener('DOMContentLoaded', async () => {
     setupSearchSuggest();
+
+    if (typeof window.getSupabaseSessionUser === 'function') {
+        const user = await window.getSupabaseSessionUser();
+        if (user) {
+            APP_STATE.isLoggedIn = true;
+            APP_STATE.accountName = user.user_metadata?.full_name || user.email || 'مستخدم';
+            APP_STATE.accountPhone = user.email || 'user@example.com';
+            persistAppState();
+        }
+    }
 
     // رص الشاشة الافتتاحية والأقسام
     if(typeof window.renderWelcomeScreen === 'function') {

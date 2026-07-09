@@ -57,24 +57,44 @@ body {
     width: 100%;
 }
 
+@media (max-width: 900px) {
+    .site-header {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .site-search {
+        flex: 1 1 100%;
+        order: 3;
+        margin: 4px 0 0;
+    }
+
+    .site-actions {
+        width: 100%;
+        justify-content: flex-end;
+        order: 2;
+    }
+}
+
 @media (max-width: 500px) {
     .site-header {
-        grid-template-columns: auto 1fr;
         padding: 10px;
-        align-items: center;
     }
-    .site-search {
-        grid-column: 1 / -1;
-        width: 100%;
-        margin: 8px 0 0 0;
-    }
+
     .site-actions {
-        justify-content: flex-end;
-        margin-top: 4px;
-        grid-column: 2;
+        justify-content: flex-start;
+        gap: 6px;
     }
+
     .cart-btn {
         min-width: 72px;
+    }
+
+    .account-chip {
+        padding: 7px 9px;
+        font-size: 0.9rem;
     }
 }
 
@@ -132,6 +152,31 @@ body {
     flex-shrink: 0;
     flex-wrap: wrap;
     justify-content: flex-end;
+}
+
+.account-shell {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.account-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border-radius: 999px;
+    background: #fff;
+    border: 1px solid #e6d9c6;
+    color: #333;
+    font-weight: 700;
+    min-height: 38px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.account-chip-icon {
+    font-size: 1rem;
 }
 
 .cart-btn {
@@ -397,6 +442,11 @@ body {
     gap: 10px;
 }
 
+.auth-form {
+    display: grid;
+    gap: 12px;
+}
+
 .auth-grid input {
     width: 100%;
     padding: 10px 12px;
@@ -409,6 +459,28 @@ body {
     flex-wrap: wrap;
     gap: 8px;
     margin-top: 10px;
+}
+
+.auth-mode-toggle {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin: 10px 0 12px;
+}
+
+.auth-mode-toggle button {
+    flex: 1 1 140px;
+    padding: 10px;
+    border-radius: 10px;
+    border: 1px solid #ddd;
+    background: #fafafa;
+    cursor: pointer;
+}
+
+.auth-mode-toggle button.active {
+    background: #182848;
+    color: white;
+    border-color: #182848;
 }
 
 .auth-role-picker {

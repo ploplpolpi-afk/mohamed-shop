@@ -17,7 +17,7 @@ function loadAppState() {
     try {
         const raw = localStorage.getItem(STORAGE_KEYS.appState);
         if (!raw) {
-            return { role: 'buyer', products: createDefaultProducts(), sellerBalances: {}, orders: [], isLoggedIn: false, accountName: '', accountPhone: '', accountMethod: 'phone' };
+            return { role: 'buyer', products: createDefaultProducts(), sellerBalances: {}, orders: [], isLoggedIn: false, accountName: '', accountPhone: '', accountMethod: 'phone', authUserId: null };
         }
         const parsed = JSON.parse(raw);
         return {
@@ -28,11 +28,12 @@ function loadAppState() {
             isLoggedIn: Boolean(parsed.isLoggedIn),
             accountName: parsed.accountName || '',
             accountPhone: parsed.accountPhone || '',
-            accountMethod: parsed.accountMethod || 'phone'
+            accountMethod: parsed.accountMethod || 'phone',
+            authUserId: parsed.authUserId || null
         };
     } catch (e) {
         console.error('فشل تحميل الحالة:', e);
-        return { role: 'buyer', products: createDefaultProducts(), sellerBalances: {}, orders: [], isLoggedIn: false, accountName: '', accountPhone: '', accountMethod: 'phone' };
+        return { role: 'buyer', products: createDefaultProducts(), sellerBalances: {}, orders: [], isLoggedIn: false, accountName: '', accountPhone: '', accountMethod: 'phone', authUserId: null };
     }
 }
 
@@ -721,7 +722,120 @@ function openMapsForDelivery() {
 }
 
 function toggleRoleMode() {
-    openAuthModal();
+    if (APP_STATE.isLoggedIn) {
+        openAccountPanel();
+    } else {
+        openAuthModal();
+    }
+}
+
+function openAccountPanel() {
+    closeAuthModal();
+    const overlay = document.createElement('div');
+    overlay.className = 'auth-modal-overlay';
+    overlay.innerHTML = `
+        <div class="auth-modal-card">
+            <button class="modal-close" onclick="closeAuthModal()">✕</button>
+            <h3>حسابي</h3>
+            <p>إليك بيانات حسابك الحالي ويمكنك تحديثها مباشرة.</p>
+            <div class="account-panel-card">
+                <div class="account-panel-row"><strong>الاسم:</strong> ${escapeHtml(APP_STATE.accountName || 'مستخدم')}</div>
+                <div class="account-panel-row"><strong>البريد أو الهاتف:</strong> ${escapeHtml(APP_STATE.accountPhone || '-')}</div>
+                <div class="account-panel-row"><strong>النمط:</strong> ${escapeHtml(APP_STATE.role === 'seller' ? 'تاجر' : 'مشتري')}</div>
+                <div class="account-panel-row"><strong>طريقة الدخول:</strong> ${escapeHtml(APP_STATE.accountMethod === 'google' ? 'Google' : 'البريد/الرقم')}</div>
+            </div>
+            <form class="auth-form" onsubmit="event.preventDefault(); updateAccountProfile()">
+                <div class="auth-grid">
+                    <input id="account-name" placeholder="الاسم" value="${escapeHtml(APP_STATE.accountName || '')}" />
+                    <input id="account-identifier" placeholder="البريد أو رقم الهاتف" value="${escapeHtml(APP_STATE.accountPhone || '')}" />
+                    <input id="account-password" type="password" placeholder="كلمة المرور الجديدة" />
+                    <div class="auth-role-picker">
+                        <button type="button" class="${APP_STATE.role === 'buyer' ? 'active' : ''}" onclick="setLocalAccountRole('buyer')">مشتري</button>
+                        <button type="button" class="${APP_STATE.role === 'seller' ? 'active' : ''}" onclick="setLocalAccountRole('seller')">تاجر</button>
+                    </div>
+                </div>
+                <div class="auth-actions">
+                    <button class="btn-order primary" type="submit">حفظ التغييرات</button>
+                    <button class="btn-map" type="button" onclick="signOutFromApp()">تسجيل الخروج</button>
+                </div>
+            </form>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+}
+
+function setLocalAccountRole(role) {
+    APP_STATE.role = role;
+    persistAppState();
+    updateRoleButton();
+    const modal = document.querySelector('.auth-modal-card');
+    if (modal) {
+        modal.querySelectorAll('.auth-role-picker button').forEach(btn => btn.classList.toggle('active', btn.textContent.includes(role === 'seller' ? 'تاجر' : 'مشتري')));
+    }
+}
+
+async function updateAccountProfile() {
+    const name = document.getElementById('account-name')?.value.trim() || 'مستخدم';
+    const identifier = document.getElementById('account-identifier')?.value.trim() || '';
+    const password = document.getElementById('account-password')?.value.trim() || '';
+    if (!identifier) {
+        showSnack('أدخل البريد أو رقم الهاتف');
+        return;
+    }
+    try {
+        if (APP_STATE.authUserId && typeof window.updateUserProfile === 'function') {
+            const updates = {
+                full_name: name,
+                role: APP_STATE.role,
+                phone: identifier.includes('@') ? null : identifier,
+                email: identifier.includes('@') ? identifier : null,
+                password: password || undefined
+            };
+            const updated = await window.updateUserProfile(APP_STATE.authUserId, updates);
+            if (updated) {
+                APP_STATE.accountName = name;
+                APP_STATE.accountPhone = identifier;
+                persistAppState();
+                updateRoleButton();
+                closeAuthModal();
+                showSnack('تم حفظ بيانات الحساب بنجاح');
+                return;
+            }
+        }
+        APP_STATE.accountName = name;
+        APP_STATE.accountPhone = identifier;
+        if (password) {
+            showSnack('تم حفظ الاسم والبريد، وسيتم تطبيق كلمة المرور عند ربط الحساب بقاعدة البيانات');
+        } else {
+            showSnack('تم حفظ بيانات الحساب محليًا');
+        }
+        persistAppState();
+        updateRoleButton();
+        closeAuthModal();
+    } catch (err) {
+        console.error('Profile update failed:', err);
+        showSnack('تعذر حفظ البيانات الآن');
+    }
+}
+
+async function signOutFromApp() {
+    try {
+        if (typeof window.signOutFromSupabase === 'function') {
+            await window.signOutFromSupabase();
+        }
+    } catch (e) {
+        console.warn('Logout warning', e);
+    }
+    APP_STATE.isLoggedIn = false;
+    APP_STATE.accountName = '';
+    APP_STATE.accountPhone = '';
+    APP_STATE.accountMethod = 'phone';
+    APP_STATE.role = 'buyer';
+    APP_STATE.authUserId = null;
+    persistAppState();
+    updateRoleButton();
+    closeAuthModal();
+    showSnack('تم تسجيل الخروج بنجاح');
 }
 
 function escapeHtml(value) {
@@ -732,7 +846,7 @@ function renderAccountUi() {
     const button = document.getElementById('role-toggle-btn');
     const chip = document.getElementById('account-chip');
     if (button) {
-        button.textContent = APP_STATE.isLoggedIn ? 'تعديل الحساب' : 'تسجيل الدخول';
+        button.textContent = APP_STATE.isLoggedIn ? 'حسابي' : 'تسجيل الدخول';
     }
     if (chip) {
         if (APP_STATE.isLoggedIn) {
@@ -757,16 +871,18 @@ function openAuthModal() {
         <div class="auth-modal-card">
             <button class="modal-close" onclick="closeAuthModal()">✕</button>
             <h3>${APP_STATE.isLoggedIn ? 'تحديث الحساب' : (AUTH_UI_MODE === 'signup' ? 'إنشاء حساب جديد' : 'تسجيل الدخول إلى المتجر')}</h3>
-            <p>${APP_STATE.isLoggedIn ? 'يمكنك تعديل بياناتك أو نوع الحساب هنا.' : 'اختر الطريقة المناسبة لك، ثم راجع الحساب الموجود أو أنشئ حسابًا جديدًا.'}</p>
+            <p>${APP_STATE.isLoggedIn ? 'يمكنك تعديل بياناتك أو نوع الحساب هنا.' : 'استخدم بريدًا أو رقم هاتف وكلمة مرور حقيقية لإنشاء حساب أو تسجيل الدخول.'}</p>
             <div class="auth-mode-toggle">
                 <button type="button" class="${AUTH_UI_MODE === 'signin' ? 'active' : ''}" onclick="toggleAuthMode('signin')">لدي حساب</button>
                 <button type="button" class="${AUTH_UI_MODE === 'signup' ? 'active' : ''}" onclick="toggleAuthMode('signup')">ليس لدي حساب</button>
             </div>
             <form class="auth-form" onsubmit="event.preventDefault(); saveAuthAccount('phone')">
                 <div class="auth-grid">
-                    <input id="auth-name" placeholder="الاسم المعروض في الطلبات" value="${escapeHtml(APP_STATE.accountName || '')}" />
-                    <input id="auth-email" type="email" placeholder="البريد أو رقم الهاتف" value="${escapeHtml(APP_STATE.accountPhone || '')}" />
+                    <input id="auth-name" placeholder="الاسم بالكامل" value="${escapeHtml(APP_STATE.accountName || '')}" />
+                    <input id="auth-email" type="email" placeholder="البريد الإلكتروني أو رقم الهاتف" value="${escapeHtml(APP_STATE.accountPhone || '')}" />
                     <input id="auth-password" type="password" placeholder="كلمة المرور" />
+                    ${AUTH_UI_MODE === 'signup' ? '<input id="auth-confirm-password" type="password" placeholder="تأكيد كلمة المرور" />' : ''}
+                    ${AUTH_UI_MODE === 'signup' ? '<label class="auth-terms"><input id="auth-terms" type="checkbox" /> أوافق على الشروط والأحكام</label>' : ''}
                     <div class="auth-role-picker">
                         <button type="button" class="${APP_STATE.role === 'buyer' ? 'active' : ''}" onclick="setSelectedAuthRole('buyer')">مشتري</button>
                         <button type="button" class="${APP_STATE.role === 'seller' ? 'active' : ''}" onclick="setSelectedAuthRole('seller')">تاجر</button>
@@ -774,7 +890,7 @@ function openAuthModal() {
                 </div>
                 <div class="auth-actions">
                     <button class="btn-order primary" type="submit">${AUTH_UI_MODE === 'signup' ? 'إنشاء الحساب' : 'تسجيل الدخول'}</button>
-                    <button class="btn-map" type="button" onclick="saveAuthAccount('google')">اختيار حساب Google</button>
+                    <button class="btn-map" type="button" onclick="toggleAuthMode('${AUTH_UI_MODE === 'signup' ? 'signin' : 'signup'}')">${AUTH_UI_MODE === 'signup' ? 'لدي حساب بالفعل' : 'إنشاء حساب جديد'}</button>
                 </div>
             </form>
         </div>
@@ -816,6 +932,7 @@ async function finalizeAuthenticatedUser(user, method = 'phone', fallbackName = 
     APP_STATE.accountMethod = method === 'google' ? 'google' : 'phone';
     APP_STATE.isLoggedIn = true;
     APP_STATE.role = user?.role || APP_STATE.role || 'buyer';
+    APP_STATE.authUserId = user?.id || APP_STATE.authUserId || null;
     persistAppState();
     updateRoleButton();
     closeAuthModal();
@@ -852,32 +969,44 @@ async function saveAuthAccount(method = 'phone') {
     const name = document.getElementById('auth-name')?.value.trim() || 'مستخدم';
     const identifier = document.getElementById('auth-email')?.value.trim() || '';
     const password = document.getElementById('auth-password')?.value.trim() || '';
+    const confirmPassword = document.getElementById('auth-confirm-password')?.value.trim() || '';
+    const acceptedTerms = document.getElementById('auth-terms')?.checked ?? true;
 
-    if (method !== 'google' && (!identifier || !password)) {
+    if (!identifier || !password) {
         showSnack('أدخل البريد أو رقم الهاتف وكلمة المرور');
         return;
     }
 
+    if (AUTH_UI_MODE === 'signup') {
+        if (!acceptedTerms) {
+            showSnack('يجب الموافقة على الشروط والأحكام');
+            return;
+        }
+        if (password !== confirmPassword) {
+            showSnack('كلمتا المرور غير متطابقتين');
+            return;
+        }
+    }
+
     try {
         let result;
-        if (method === 'google') {
-            result = await window.signInWithGoogleSupabase({ full_name: name, role: APP_STATE.role || 'buyer' });
-            if (result.success && result.redirecting) {
-                showSnack('سيتم تحويلك إلى Google لاختيار الحساب...');
-                return;
-            }
-        } else if (AUTH_UI_MODE === 'signup') {
+        if (AUTH_UI_MODE === 'signup') {
             result = await window.signUpWithSupabase(identifier, password, { full_name: name, role: APP_STATE.role || 'buyer' });
             if (!result.success) {
-                showSnack('هذا الحساب موجود بالفعل أو لا يمكن إنشاؤه الآن');
+                if (result.error === 'already_exists') {
+                    AUTH_UI_MODE = 'signin';
+                    openAuthModal();
+                    showSnack('الحساب موجود بالفعل. استخدم تسجيل الدخول.');
+                } else {
+                    showSnack(result.message || 'تعذر إنشاء الحساب الآن');
+                }
                 return;
             }
+            showSnack('تم إنشاء الحساب بنجاح');
         } else {
             result = await window.signInWithSupabase(identifier, password, { full_name: name, role: APP_STATE.role || 'buyer' });
             if (!result.success) {
-                AUTH_UI_MODE = 'signup';
-                openAuthModal();
-                showSnack('لا يوجد حساب بهذا البريد أو كلمة المرور غير صحيحة. يمكنك إنشاء حساب جديد الآن.');
+                showSnack(result.message || 'بيانات الدخول غير صحيحة');
                 return;
             }
         }
@@ -888,9 +1017,17 @@ async function saveAuthAccount(method = 'phone') {
         const normalizedIdentifier = identifier || getAuthIdentifier(user, '') || 'user@example.com';
         APP_STATE.accountName = getAuthDisplayName(user) || name || 'مستخدم';
         APP_STATE.accountPhone = normalizedIdentifier;
-        APP_STATE.accountMethod = method === 'google' ? 'google' : 'phone';
+        APP_STATE.accountMethod = 'phone';
         APP_STATE.isLoggedIn = Boolean(user || normalizedIdentifier);
         APP_STATE.role = user?.role || APP_STATE.role || 'buyer';
+        APP_STATE.authUserId = user?.id || APP_STATE.authUserId || null;
+        if (APP_STATE.authUserId && typeof window.updateUserProfile === 'function') {
+            await window.updateUserProfile(APP_STATE.authUserId, {
+                full_name: APP_STATE.accountName,
+                role: APP_STATE.role,
+                phone: APP_STATE.accountPhone
+            });
+        }
         persistAppState();
         updateRoleButton();
         closeAuthModal();
@@ -1038,7 +1175,9 @@ const APP_GLOBALS = {
     setSelectedAuthRole,
     saveAuthAccount,
     simulateGoogleAuth,
-    toggleAuthMode
+    toggleAuthMode,
+    signOutFromApp,
+    openAccountPanel
 };
 Object.assign(window, APP_GLOBALS);
 

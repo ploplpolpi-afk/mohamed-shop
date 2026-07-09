@@ -34,19 +34,20 @@ body {
     grid-template-columns: auto 1fr auto;
     align-items: center;
     gap: 12px;
-    padding: 12px 15px;
-    background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(250,250,250,0.95));
-    border-bottom: 1px solid #eee;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.03);
+    padding: 12px 16px;
+    background: linear-gradient(90deg, #131921 0%, #232f3e 100%);
+    border-bottom: 1px solid #3b4a5a;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.12);
     width: 100%;
     overflow: visible;
 }
 
 .site-brand { 
     font-weight: 900; 
-    font-size: 1.2rem; 
-    color: #4a2b2b; 
+    font-size: 1.26rem; 
+    color: #ffffff; 
     white-space: nowrap;
+    letter-spacing: 0.2px;
 }
 
 .site-search { 
@@ -100,9 +101,9 @@ body {
 
 .site-search input { 
     flex: 1; 
-    padding: 10px 12px; 
-    border-radius: 0 6px 6px 0; /* متوافق مع اتجاه RTL */
-    border: 1px solid #ddd; 
+    padding: 11px 13px; 
+    border-radius: 0 10px 10px 0;
+    border: 1px solid #d7dde6; 
     font-size: 0.95rem; 
     min-width: 50px;
 }
@@ -111,14 +112,14 @@ body {
     background: linear-gradient(135deg, #ffb347, #ff7f24);
     border: none;
     padding: 10px 14px;
-    border-radius: 6px 0 0 6px; /* متوافق مع اتجاه RTL */
+    border-radius: 10px 0 0 10px;
     cursor: pointer;
     color: #fff;
-    font-weight: 700;
+    font-weight: 800;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 6px 14px rgba(255,127,36,0.16);
+    box-shadow: 0 6px 14px rgba(255,127,36,0.18);
 }
 
 .site-search-btn svg {
@@ -180,20 +181,21 @@ body {
 }
 
 .cart-btn {
-    background: #111;
-    color: #fff;
+    background: linear-gradient(135deg, #ffd814, #f5c400);
+    color: #111;
     border: none;
     padding: 8px 14px;
-    border-radius: 6px;
+    border-radius: 999px;
     cursor: pointer;
     white-space: nowrap;
-    font-weight: 600;
+    font-weight: 800;
+    box-shadow: 0 4px 12px rgba(255, 216, 20, 0.16);
 }
 
 .support-btn {
-    background: #fff;
-    color: #2f3a4a;
-    border: 1px solid #e7e7e7;
+    background: rgba(255,255,255,0.12);
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.2);
     padding: 8px 12px;
     border-radius: 999px;
     cursor: pointer;
@@ -202,7 +204,6 @@ body {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    box-shadow: 0 3px 10px rgba(0,0,0,0.04);
 }
 
 .support-icon {
@@ -323,7 +324,7 @@ body {
 
 /* الشاشة الافتتاحية */
 #welcome-screen {
-    background: radial-gradient(circle at top, #4e4e4e 0%, #1f1f1f 45%, #080808 100%);
+    background: linear-gradient(135deg, #0f172a 0%, #111827 45%, #1f2937 100%);
     color: white;
     justify-content: center;
     align-items: center;
@@ -335,24 +336,26 @@ body {
 }
 
 .welcome-content {
-    max-width: 620px;
-    padding: 28px;
-    border-radius: 24px;
-    background: rgba(255,255,255,0.08);
-    backdrop-filter: blur(10px);
-    box-shadow: 0 18px 48px rgba(0,0,0,0.25);
+    max-width: 680px;
+    padding: 34px;
+    border-radius: 28px;
+    background: rgba(255,255,255,0.09);
+    backdrop-filter: blur(16px);
+    box-shadow: 0 22px 60px rgba(0,0,0,0.28);
+    border: 1px solid rgba(255,255,255,0.14);
 }
 
 .welcome-content h1 {
-    font-size: 2.5rem;
+    font-size: 2.6rem;
     margin-bottom: 15px;
-    letter-spacing: 1px;
+    letter-spacing: 0.3px;
     padding: 0 15px;
+    font-weight: 900;
 }
 
 .welcome-content p {
-    font-size: 1rem;
-    color: #f1e7d0;
+    font-size: 1.05rem;
+    color: #f3e8c7;
     margin-bottom: 18px;
 }
 
@@ -399,13 +402,14 @@ body {
    8. تحسينات الواجهة والتاجر
    ========================================================================== */
 .role-toggle-btn {
-    background: linear-gradient(135deg, #4b6cb7, #182848);
-    color: white;
+    background: linear-gradient(135deg, #ffd814, #f5c400);
+    color: #111;
     border: none;
     border-radius: 999px;
     padding: 8px 12px;
-    font-weight: 700;
+    font-weight: 800;
     cursor: pointer;
+    box-shadow: 0 4px 12px rgba(255, 216, 20, 0.18);
 }
 
 .auth-modal-overlay {
@@ -420,21 +424,49 @@ body {
 }
 
 .auth-modal-card {
-    width: min(520px, 100%);
-    background: white;
-    border-radius: 18px;
-    padding: 20px;
-    box-shadow: 0 24px 60px rgba(0,0,0,0.26);
+    width: min(590px, 100%);
+    background: linear-gradient(135deg, #ffffff 0%, #f9fbff 100%);
+    border-radius: 24px;
+    padding: 28px;
+    box-shadow: 0 32px 90px rgba(0,0,0,0.28);
     position: relative;
+    border: 1px solid #e4ebf7;
+    overflow: hidden;
+}
+
+.auth-modal-card::before {
+    content: '';
+    position: absolute;
+    top: -80px;
+    right: -60px;
+    width: 220px;
+    height: 220px;
+    background: radial-gradient(circle, rgba(255, 153, 0, 0.16), transparent 70%);
+    pointer-events: none;
+}
+
+.auth-modal-card::after {
+    content: '';
+    position: absolute;
+    bottom: -60px;
+    left: -40px;
+    width: 220px;
+    height: 220px;
+    background: radial-gradient(circle, rgba(0, 113, 240, 0.12), transparent 70%);
+    pointer-events: none;
 }
 
 .auth-modal-card h3 {
     margin: 0 0 8px;
+    font-size: 1.4rem;
+    color: #111827;
+    font-weight: 800;
 }
 
 .auth-modal-card p {
-    margin: 0 0 12px;
-    color: #666;
+    margin: 0 0 14px;
+    color: #64748b;
+    font-size: 0.95rem;
 }
 
 .auth-grid {
@@ -449,16 +481,46 @@ body {
 
 .auth-grid input {
     width: 100%;
-    padding: 10px 12px;
-    border-radius: 10px;
-    border: 1px solid #ddd;
+    padding: 13px 14px;
+    border-radius: 12px;
+    border: 1px solid #d7e2f0;
+    background: #fff;
+    box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.04);
+    font-size: 0.95rem;
+}
+
+.auth-grid input:focus {
+    outline: none;
+    border-color: #ff9900;
+    box-shadow: 0 0 0 3px rgba(255, 153, 0, 0.16);
+}
+
+.auth-terms {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    color: #475569;
+}
+
+.auth-terms input {
+    width: auto;
+    margin: 0;
 }
 
 .auth-actions {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
-    margin-top: 10px;
+    margin-top: 12px;
+}
+
+.auth-actions .btn-order.primary,
+.auth-actions .btn-map {
+    border-radius: 999px;
+    padding: 11px 16px;
+    font-weight: 800;
+    font-size: 0.95rem;
 }
 
 .auth-mode-toggle {
@@ -471,16 +533,37 @@ body {
 .auth-mode-toggle button {
     flex: 1 1 140px;
     padding: 10px;
-    border-radius: 10px;
-    border: 1px solid #ddd;
-    background: #fafafa;
+    border-radius: 999px;
+    border: 1px solid #dce7f0;
+    background: #f8fbff;
     cursor: pointer;
+    font-weight: 800;
+    color: #334155;
 }
 
 .auth-mode-toggle button.active {
-    background: #182848;
+    background: linear-gradient(135deg, #ff9900, #ff7a00);
     color: white;
-    border-color: #182848;
+    border-color: transparent;
+    box-shadow: 0 8px 20px rgba(255, 153, 0, 0.2);
+}
+
+.account-panel-card {
+    background: #f7f9fc;
+    border: 1px solid #e5eaf2;
+    border-radius: 14px;
+    padding: 14px;
+    display: grid;
+    gap: 8px;
+    margin: 12px 0;
+}
+
+.account-panel-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    font-size: 0.95rem;
+    color: #334155;
 }
 
 .auth-role-picker {
@@ -493,16 +576,18 @@ body {
 .auth-role-picker button {
     flex: 1 1 140px;
     padding: 10px;
-    border-radius: 10px;
-    border: 1px solid #ddd;
-    background: #fafafa;
+    border-radius: 999px;
+    border: 1px solid #dce7f0;
+    background: #f8fbff;
     cursor: pointer;
+    font-weight: 800;
+    color: #334155;
 }
 
 .auth-role-picker button.active {
-    background: #ff5722;
+    background: linear-gradient(135deg, #0f766e, #14b8a6);
     color: white;
-    border-color: #ff5722;
+    border-color: transparent;
 }
 
 .stock-pill {

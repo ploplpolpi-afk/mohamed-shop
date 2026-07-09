@@ -84,16 +84,45 @@ async function saveOrderToSupabase(orderData) {
     }
 }
 
+async function findUserByIdentifier(identifier) {
+    if (!window.supabaseClient) return null;
+    try {
+        const normalizedIdentifier = String(identifier || '').trim().toLowerCase();
+        const { data, error } = await window.supabaseClient.from('users').select('*').or(`email.eq.${normalizedIdentifier},phone.eq.${normalizedIdentifier}`).maybeSingle();
+        if (error) throw error;
+        return data || null;
+    } catch (err) {
+        console.warn('User lookup failed:', err);
+        return null;
+    }
+}
+
+async function updateUserProfile(userId, updates) {
+    if (!window.supabaseClient || !userId) return null;
+    try {
+        const { data, error } = await window.supabaseClient.from('users').update(updates).eq('id', userId).select().single();
+        if (error) throw error;
+        return data;
+    } catch (err) {
+        console.warn('Profile update failed:', err);
+        return null;
+    }
+}
+
 async function signInWithSupabase(identifier, password, options = {}) {
     if (!window.supabaseClient) return { success: false, error: 'Supabase client not ready' };
     try {
         const normalizedIdentifier = String(identifier || '').trim().toLowerCase();
-        const { data, error } = await window.supabaseClient.from('users').select('*').or(`email.eq.${normalizedIdentifier},phone.eq.${normalizedIdentifier}`).eq('password', password).maybeSingle();
-        if (error) throw error;
-        if (!data) return { success: false, error: 'Invalid credentials' };
-        return { success: true, user: data, session: null, options };
+        const existing = await findUserByIdentifier(normalizedIdentifier);
+        if (!existing) {
+            return { success: false, error: 'not_found', message: 'لا يوجد حساب بهذا البريد أو الرقم' };
+        }
+        if (String(existing.password || '') !== String(password || '')) {
+            return { success: false, error: 'invalid_password', message: 'كلمة المرور غير صحيحة' };
+        }
+        return { success: true, user: existing, session: null, options };
     } catch (err) {
-        return { success: false, error: err };
+        return { success: false, error: err, message: 'تعذر التحقق من الحساب' };
     }
 }
 
@@ -101,6 +130,10 @@ async function signUpWithSupabase(identifier, password, options = {}) {
     if (!window.supabaseClient) return { success: false, error: 'Supabase client not ready' };
     try {
         const normalizedIdentifier = String(identifier || '').trim().toLowerCase();
+        const existing = await findUserByIdentifier(normalizedIdentifier);
+        if (existing) {
+            return { success: false, error: 'already_exists', message: 'الحساب موجود بالفعل. استخدم تسجيل الدخول.' };
+        }
         const isEmail = normalizedIdentifier.includes('@');
         const payload = {
             email: isEmail ? normalizedIdentifier : null,
@@ -114,25 +147,26 @@ async function signUpWithSupabase(identifier, password, options = {}) {
         if (error) throw error;
         return { success: true, user: data, session: null, options };
     } catch (err) {
-        return { success: false, error: err };
+        return { success: false, error: err, message: 'تعذر إنشاء الحساب الآن' };
     }
 }
 
 async function signInWithGoogleSupabase(options = {}) {
-    if (!window.supabaseClient) return { success: false, error: 'Supabase client not ready' };
+    if (!window.supabaseClient) return { success: false, error: 'Supabase client not ready', message: 'لم يتم تهيئة Supabase بعد' };
     try {
-        const redirectTo = `${window.location.origin}${window.location.pathname}`;
+        const redirectTo = window.location.origin;
         const { data, error } = await window.supabaseClient.auth.signInWithOAuth({
             provider: 'google',
             options: {
                 redirectTo,
+                flow: 'pkce',
                 queryParams: { access_type: 'offline', prompt: 'consent' }
             }
         });
         if (error) throw error;
         return { success: true, redirecting: true, data, options };
     } catch (err) {
-        return { success: false, error: err };
+        return { success: false, error: err, message: 'تعذر فتح تسجيل الدخول باستخدام Google الآن. استخدم البريد أو الرقم بدلاً من ذلك.' };
     }
 }
 
@@ -147,6 +181,8 @@ async function getSupabaseSessionUser() {
 window.syncProductsToSupabase = syncProductsToSupabase;
 window.loadProductsFromSupabase = loadProductsFromSupabase;
 window.saveOrderToSupabase = saveOrderToSupabase;
+window.findUserByIdentifier = findUserByIdentifier;
+window.updateUserProfile = updateUserProfile;
 window.signInWithSupabase = signInWithSupabase;
 window.signUpWithSupabase = signUpWithSupabase;
 window.signInWithGoogleSupabase = signInWithGoogleSupabase;

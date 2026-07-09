@@ -17,18 +17,22 @@ function loadAppState() {
     try {
         const raw = localStorage.getItem(STORAGE_KEYS.appState);
         if (!raw) {
-            return { role: 'buyer', products: createDefaultProducts(), sellerBalances: {}, orders: [] };
+            return { role: 'buyer', products: createDefaultProducts(), sellerBalances: {}, orders: [], isLoggedIn: false, accountName: '', accountPhone: '', accountMethod: 'phone' };
         }
         const parsed = JSON.parse(raw);
         return {
             role: parsed.role || 'buyer',
             products: Array.isArray(parsed.products) && parsed.products.length ? parsed.products : createDefaultProducts(),
             sellerBalances: parsed.sellerBalances || {},
-            orders: parsed.orders || []
+            orders: parsed.orders || [],
+            isLoggedIn: Boolean(parsed.isLoggedIn),
+            accountName: parsed.accountName || '',
+            accountPhone: parsed.accountPhone || '',
+            accountMethod: parsed.accountMethod || 'phone'
         };
     } catch (e) {
         console.error('فشل تحميل الحالة:', e);
-        return { role: 'buyer', products: createDefaultProducts(), sellerBalances: {}, orders: [] };
+        return { role: 'buyer', products: createDefaultProducts(), sellerBalances: {}, orders: [], isLoggedIn: false, accountName: '', accountPhone: '', accountMethod: 'phone' };
     }
 }
 
@@ -716,17 +720,67 @@ function openMapsForDelivery() {
 }
 
 function toggleRoleMode() {
-    APP_STATE.role = APP_STATE.role === 'seller' ? 'buyer' : 'seller';
-    persistAppState();
-    updateRoleButton();
-    showSnack(APP_STATE.role === 'seller' ? 'تم تفعيل وضع التاجر' : 'تم العودة لوضع المشتري');
+    openAuthModal();
 }
 
 function updateRoleButton() {
     const button = document.getElementById('role-toggle-btn');
     if (button) {
-        button.textContent = APP_STATE.role === 'seller' ? 'التبديل للمشتري' : 'التبديل للتاجر';
+        button.textContent = APP_STATE.isLoggedIn ? (APP_STATE.role === 'seller' ? 'حساب التاجر' : 'حساب المشتري') : 'تسجيل / دخول';
     }
+}
+
+function openAuthModal() {
+    closeAuthModal();
+    const overlay = document.createElement('div');
+    overlay.className = 'auth-modal-overlay';
+    overlay.innerHTML = `
+        <div class="auth-modal-card">
+            <button class="modal-close" onclick="closeAuthModal()">✕</button>
+            <h3>${APP_STATE.isLoggedIn ? 'تحديث الحساب' : 'إنشاء حساب أو تسجيل دخول'}</h3>
+            <p>${APP_STATE.isLoggedIn ? 'يمكنك تغيير اسم الحساب أو نوعه هنا.' : 'ادخل رقم الهاتف أو البريد ثم اختر نوع الحساب.'}</p>
+            <div class="auth-grid">
+                <input id="auth-name" placeholder="الاسم المعروض في الطلبات" value="${(APP_STATE.accountName || '').replace(/"/g, '&quot;')}" />
+                <input id="auth-phone" placeholder="رقم الهاتف أو البريد" value="${(APP_STATE.accountPhone || '').replace(/"/g, '&quot;')}" />
+                <div class="auth-role-picker">
+                    <button type="button" class="${APP_STATE.role === 'buyer' ? 'active' : ''}" onclick="setSelectedAuthRole('buyer')">مشتري</button>
+                    <button type="button" class="${APP_STATE.role === 'seller' ? 'active' : ''}" onclick="setSelectedAuthRole('seller')">تاجر</button>
+                </div>
+            </div>
+            <div class="auth-actions">
+                <button class="btn-order primary" onclick="saveAuthAccount()">حفظ الحساب</button>
+                <button class="btn-map" onclick="saveAuthAccount('google')">تسجيل بحساب Google</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+}
+
+function closeAuthModal() {
+    const modal = document.querySelector('.auth-modal-overlay');
+    if (modal) modal.remove();
+}
+
+function setSelectedAuthRole(role) {
+    APP_STATE.role = role;
+    const buttons = document.querySelectorAll('.auth-role-picker button');
+    buttons.forEach(btn => btn.classList.toggle('active', btn.textContent.includes(role === 'seller' ? 'تاجر' : 'مشتري')));
+    persistAppState();
+    updateRoleButton();
+}
+
+function saveAuthAccount(method = 'phone') {
+    const name = document.getElementById('auth-name')?.value.trim() || 'زائر';
+    const identifier = document.getElementById('auth-phone')?.value.trim() || '';
+    const normalizedIdentifier = identifier || (method === 'google' ? 'google-user@example.com' : 'phone-user');
+    APP_STATE.accountName = name;
+    APP_STATE.accountPhone = normalizedIdentifier;
+    APP_STATE.accountMethod = method === 'google' ? 'google' : 'phone';
+    APP_STATE.isLoggedIn = Boolean(name && normalizedIdentifier);
+    persistAppState();
+    updateRoleButton();
+    closeAuthModal();
+    showSnack(APP_STATE.role === 'seller' ? 'تم حفظ حساب التاجر' : 'تم حفظ حساب المشتري');
 }
 
 function closeSellerPanel() {
@@ -766,8 +820,8 @@ async function submitSellerProduct(e) {
 }
 
 function openSellerPanel() {
-    if (APP_STATE.role !== 'seller') {
-        showSnack('ابدأ بتفعيل وضع التاجر أولاً');
+    if (APP_STATE.role !== 'seller' || !APP_STATE.isLoggedIn) {
+        showSnack('ابدأ بتسجيل حساب التاجر أولاً');
         return;
     }
     closeSellerPanel();
@@ -856,7 +910,12 @@ const APP_GLOBALS = {
     submitSellerProduct,
     getProductById,
     decreaseStockAndUpdateBalance,
-    persistLocalOrder
+    persistLocalOrder,
+    openAuthModal,
+    closeAuthModal,
+    setSelectedAuthRole,
+    saveAuthAccount,
+    simulateGoogleAuth
 };
 Object.assign(window, APP_GLOBALS);
 

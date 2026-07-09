@@ -30,16 +30,16 @@ body {
     position: sticky;
     top: 0;
     z-index: 1200;
-    display: flex;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
     align-items: center;
-    justify-content: space-between;
     gap: 12px;
     padding: 12px 15px;
     background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(250,250,250,0.95));
     border-bottom: 1px solid #eee;
     box-shadow: 0 6px 20px rgba(0,0,0,0.03);
     width: 100%;
-    flex-wrap: wrap; /* يسمح بنزول السيرش سطر جديد على الشاشات الصغيرة جداً لحماية السلة */
+    overflow: visible;
 }
 
 .site-brand { 
@@ -50,22 +50,31 @@ body {
 }
 
 .site-search { 
-    flex: 1; 
     display: flex; 
     max-width: 720px; 
     margin: 0 8px; 
-    min-width: 140px; /* تمنع السيرش من سحق باقي العناصر */
+    min-width: 140px;
+    width: 100%;
 }
 
 @media (max-width: 500px) {
     .site-header {
+        grid-template-columns: auto 1fr;
         padding: 10px;
+        align-items: center;
     }
     .site-search {
-        order: 3; /* ينزل السيرش في سطر لوحده تحت البراند والسلة عشان ميزقش السلة بره */
-        flex: auto;
+        grid-column: 1 / -1;
         width: 100%;
         margin: 8px 0 0 0;
+    }
+    .site-actions {
+        justify-content: flex-end;
+        margin-top: 4px;
+        grid-column: 2;
+    }
+    .cart-btn {
+        min-width: 72px;
     }
 }
 
@@ -120,7 +129,9 @@ body {
     display: flex; 
     gap: 8px; 
     align-items: center; 
-    flex-shrink: 0; /* تمنع انكماش زرار السلة نهائياً */
+    flex-shrink: 0;
+    flex-wrap: wrap;
+    justify-content: flex-end;
 }
 
 .cart-btn {
@@ -350,6 +361,76 @@ body {
     padding: 8px 12px;
     font-weight: 700;
     cursor: pointer;
+}
+
+.auth-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(7, 10, 16, 0.72);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    padding: 16px;
+}
+
+.auth-modal-card {
+    width: min(520px, 100%);
+    background: white;
+    border-radius: 18px;
+    padding: 20px;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.26);
+    position: relative;
+}
+
+.auth-modal-card h3 {
+    margin: 0 0 8px;
+}
+
+.auth-modal-card p {
+    margin: 0 0 12px;
+    color: #666;
+}
+
+.auth-grid {
+    display: grid;
+    gap: 10px;
+}
+
+.auth-grid input {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid #ddd;
+}
+
+.auth-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.auth-role-picker {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+}
+
+.auth-role-picker button {
+    flex: 1 1 140px;
+    padding: 10px;
+    border-radius: 10px;
+    border: 1px solid #ddd;
+    background: #fafafa;
+    cursor: pointer;
+}
+
+.auth-role-picker button.active {
+    background: #ff5722;
+    color: white;
+    border-color: #ff5722;
 }
 
 .stock-pill {

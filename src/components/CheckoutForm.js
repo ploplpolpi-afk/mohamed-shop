@@ -23,6 +23,7 @@ async function handleOrderSubmit(e) {
     const phone = document.getElementById('client-phone')?.value.trim() || '';
     const address = document.getElementById('client-address')?.value.trim() || '';
     const paymentMethod = document.getElementById('payment')?.value;
+    const size = document.getElementById('size')?.value || 'M';
     const transferInput = document.getElementById('transfer-image');
     const transferFile = transferInput?.files?.[0] || null;
 
@@ -92,6 +93,13 @@ async function handleOrderSubmit(e) {
         }],
         total: productPrice * productQty,
         status: 'pending',
+        size,
+        payment_method: paymentMethod,
+        client_name: name,
+        client_phone: phone,
+        client_address: address,
+        lat,
+        lon,
         shipping_address: {
             full_name: name,
             phone,

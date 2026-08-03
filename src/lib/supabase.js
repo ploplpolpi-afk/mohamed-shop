@@ -232,11 +232,36 @@ async function signInWithFacebookSupabase(options = {}) {
 }
 
 async function signOutFromSupabase() {
-    return true;
+    if (!window.supabaseClient) return true;
+    const { error } = await window.supabaseClient.auth.signOut();
+    return !error;
 }
 
 async function getSupabaseSessionUser() {
-    return null;
+    if (!window.supabaseClient) return null;
+    try {
+        const { data: { session }, error } = await window.supabaseClient.auth.getSession();
+        if (error) throw error;
+        return session?.user || null;
+    } catch (err) {
+        console.warn('Failed to load Supabase session:', err);
+        return null;
+    }
+}
+
+function initializeSupabaseAuthSync() {
+    if (!window.supabaseClient || typeof window.supabaseClient.auth?.onAuthStateChange !== 'function') return;
+
+    window.supabaseClient.auth.onAuthStateChange(async (event, session) => {
+        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+            const user = session?.user || null;
+            if (user && typeof window.finalizeAuthenticatedUser === 'function') {
+                const provider = String(user?.app_metadata?.provider || session?.provider || 'phone').toLowerCase();
+                const method = provider === 'facebook' ? 'facebook' : provider === 'google' ? 'google' : 'phone';
+                await window.finalizeAuthenticatedUser(user, method, user?.user_metadata?.full_name || user?.email || 'مستخدم', user?.email || user?.phone || '');
+            }
+        }
+    });
 }
 
 window.syncProductsToSupabase = syncProductsToSupabase;
@@ -250,3 +275,4 @@ window.signInWithGoogleSupabase = signInWithGoogleSupabase;
 window.signInWithFacebookSupabase = signInWithFacebookSupabase;
 window.signOutFromSupabase = signOutFromSupabase;
 window.getSupabaseSessionUser = getSupabaseSessionUser;
+window.initializeSupabaseAuthSync = initializeSupabaseAuthSync;

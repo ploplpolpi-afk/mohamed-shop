@@ -1191,11 +1191,11 @@ function setSelectedAuthRole(role) {
 }
 
 function getAuthDisplayName(user) {
-    return user?.full_name || user?.user_metadata?.full_name || user?.name || '';
+    return user?.full_name || user?.user_metadata?.full_name || user?.user_metadata?.name || user?.name || user?.identities?.[0]?.identity_data?.full_name || '';
 }
 
 function getAuthIdentifier(user, fallback = '') {
-    return user?.email || user?.phone || user?.user_metadata?.email || fallback;
+    return user?.email || user?.phone || user?.user_metadata?.email || user?.identities?.[0]?.identity_data?.email || fallback;
 }
 
 async function finalizeAuthenticatedUser(user, method = 'phone', fallbackName = 'مستخدم', fallbackIdentifier = '') {
@@ -1203,7 +1203,7 @@ async function finalizeAuthenticatedUser(user, method = 'phone', fallbackName = 
     const displayName = getAuthDisplayName(user) || fallbackName || 'مستخدم';
     APP_STATE.accountName = displayName;
     APP_STATE.accountPhone = normalizedIdentifier;
-    APP_STATE.accountMethod = method === 'google' ? 'google' : 'phone';
+    APP_STATE.accountMethod = method === 'facebook' ? 'facebook' : method === 'google' ? 'google' : 'phone';
     APP_STATE.isLoggedIn = true;
     APP_STATE.role = user?.role || APP_STATE.role || 'buyer';
     APP_STATE.authUserId = user?.id || APP_STATE.authUserId || null;
@@ -1467,11 +1467,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (typeof window.getSupabaseSessionUser === 'function') {
         const user = await window.getSupabaseSessionUser();
-        if (user) {
-            APP_STATE.isLoggedIn = true;
-            APP_STATE.accountName = user.user_metadata?.full_name || user.email || 'مستخدم';
-            APP_STATE.accountPhone = user.email || 'user@example.com';
-            persistAppState();
+        if (user && typeof window.finalizeAuthenticatedUser === 'function') {
+            await window.finalizeAuthenticatedUser(user, user?.app_metadata?.provider === 'facebook' ? 'facebook' : user?.app_metadata?.provider === 'google' ? 'google' : 'phone', user.user_metadata?.full_name || user.email || 'مستخدم', user.email || user.phone || '');
         }
     }
 
@@ -1481,6 +1478,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     if(typeof window.renderCategoriesScreen === 'function') {
         document.getElementById('categories-screen').innerHTML = window.renderCategoriesScreen();
+    }
+
+    if (typeof window.initializeSupabaseAuthSync === 'function') {
+        window.initializeSupabaseAuthSync();
     }
 
     const productsGrid = document.querySelector('.products-grid');

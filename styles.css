@@ -294,6 +294,34 @@ body {
     box-sizing: border-box;
     opacity: 0;
     transition: opacity 0.4s ease-in-out;
+    position: relative;
+}
+
+.screen-locked::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.12);
+    pointer-events: none;
+}
+
+.screen-lock-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 5;
+    pointer-events: none;
+}
+
+.screen-lock-pill {
+    background: rgba(17, 24, 39, 0.9);
+    color: #fff;
+    padding: 10px 16px;
+    border-radius: 999px;
+    font-weight: 800;
+    box-shadow: 0 10px 24px rgba(0,0,0,0.2);
 }
 
 .screen.active {
@@ -397,6 +425,31 @@ body {
     transition: background 0.2s;
 }
 .back-btn:hover { background: #e0e0e0; }
+
+.screen-lock-btn {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: #111827;
+    color: #fff;
+    border: none;
+    border-radius: 999px;
+    width: 38px;
+    height: 38px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 8px 20px rgba(17,24,39,0.16);
+}
+
+.welcome-content .screen-lock-btn {
+    left: auto;
+    right: 16px;
+    top: 16px;
+    transform: none;
+}
 
 /* ==========================================================================
    8. تحسينات الواجهة والتاجر
@@ -963,10 +1016,20 @@ body {
 
     .site-actions {
         margin-right: auto;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 6px;
     }
 
     .cart-btn {
         padding: 8px 12px;
+    }
+
+    .support-btn,
+    .role-toggle-btn,
+    .cart-btn {
+        font-size: 0.9rem;
+        padding: 8px 10px;
     }
 
     .screen {
@@ -1059,6 +1122,34 @@ body {
 @media (max-width: 480px) {
     .site-header {
         padding: 8px 10px;
+    }
+
+    .site-actions {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .support-btn,
+    .role-toggle-btn,
+    .cart-btn {
+        padding: 7px 9px;
+        font-size: 0.84rem;
+    }
+
+    .auth-modal-card {
+        padding: 18px;
+        border-radius: 16px;
+    }
+
+    .auth-grid input,
+    .seller-form-grid input {
+        font-size: 0.92rem;
+    }
+
+    .seller-product-row,
+    .order-track-card {
+        flex-direction: column;
+        align-items: flex-start;
     }
 
     .site-search {

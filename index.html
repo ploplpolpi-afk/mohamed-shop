@@ -62,6 +62,7 @@
 
     <div id="welcome-screen" class="screen active">
         <div class="welcome-content animate-fade-in">
+            <button class="screen-lock-btn" type="button" data-screen-id="welcome-screen" onclick="toggleScreenLock(this)">🔓</button>
             <h1>مرحبا ف متجرنا للبيع</h1>
             <p>أفضل الخامات وأحدث الصيحات بين يديك</p>
             <button id="start-btn" class="btn-primary" onclick="showScreen('categories-screen')">بداء</button>
@@ -70,6 +71,7 @@
     <div id="categories-screen" class="screen">
         <header class="main-header">
             <button class="back-btn" onclick="showScreen('welcome-screen')">◄ الرئيسية</button>
+            <button class="screen-lock-btn" type="button" data-screen-id="categories-screen" onclick="toggleScreenLock(this)">🔓</button>
             <h2>اختر القسم</h2>
             <p class="subtitle">تسوق حسب اهتمامك</p>
         </header>
@@ -110,6 +112,7 @@
     <div id="products-screen" class="screen">
         <header class="main-header">
             <button class="back-btn" onclick="showScreen('categories-screen')">◄ الأقسام</button>
+            <button class="screen-lock-btn" type="button" data-screen-id="products-screen" onclick="toggleScreenLock(this)">🔓</button>
             <h2 id="current-section-title">قسم المنتجات</h2>
         </header>
         <main class="products-grid animate-fade-in"></main>
@@ -118,6 +121,7 @@
     <div id="checkout-screen" class="screen">
         <header class="main-header">
             <button class="back-btn" onclick="showScreen('products-screen')">◄ المنتجات</button>
+            <button class="screen-lock-btn" type="button" data-screen-id="checkout-screen" onclick="toggleScreenLock(this)">🔓</button>
             <h2>تأكيد طلب الشراء</h2>
         </header>
         <main class="checkout-container animate-fade-in"></main>

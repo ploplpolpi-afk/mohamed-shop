@@ -1033,6 +1033,80 @@ function escapeHtml(value) {
     return String(value || '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
 }
 
+function showFullscreenHint() {
+    if (sessionStorage.getItem('mohamed-fullscreen-hint-shown')) return;
+    const existing = document.getElementById('fullscreen-hint-overlay');
+    if (existing) return;
+
+    const overlay = document.createElement('div');
+    overlay.id = 'fullscreen-hint-overlay';
+    overlay.className = 'fullscreen-hint-overlay';
+    overlay.innerHTML = `
+        <div class="fullscreen-hint-card">
+            <h3>افتح الموقع على الشاشة الكاملة</h3>
+            <p>للتجربة الأفضل على الموبايل، نرشح أن تفتح الموقع في وضع الشاشة الكاملة.</p>
+            <div class="fullscreen-hint-actions">
+                <button class="btn-order primary" type="button" onclick="requestFullscreenMode()">فتح الشاشة الكاملة</button>
+                <button class="btn-map" type="button" onclick="closeFullscreenHint()">متابعة</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+    sessionStorage.setItem('mohamed-fullscreen-hint-shown', 'true');
+}
+
+function closeFullscreenHint() {
+    const overlay = document.getElementById('fullscreen-hint-overlay');
+    if (overlay) overlay.remove();
+}
+
+async function requestFullscreenMode() {
+    try {
+        if (document.documentElement.requestFullscreen) {
+            await document.documentElement.requestFullscreen();
+            showSnack('تم فتح الشاشة الكاملة');
+        } else {
+            showSnack('المتصفح لا يدعم هذه الميزة مباشرة');
+        }
+    } catch (err) {
+        console.warn('Fullscreen failed', err);
+        showSnack('يمكنك تشغيل الشاشة الكاملة يدويًا من المتصفح');
+    } finally {
+        closeFullscreenHint();
+    }
+}
+
+async function handleFacebookAuth() {
+    const button = document.querySelector('.btn-facebook');
+    if (button) {
+        button.disabled = true;
+        button.textContent = 'جاري الاتصال بفيسبوك...';
+    }
+    try {
+        if (typeof window.signInWithFacebookSupabase === 'function') {
+            const result = await window.signInWithFacebookSupabase({
+                full_name: document.getElementById('auth-name')?.value.trim() || APP_STATE.accountName || 'مستخدم',
+                role: APP_STATE.role || 'buyer'
+            });
+            if (result?.success) {
+                showSnack('تم بدء تسجيل الدخول عبر فيسبوك');
+                return;
+            }
+            showSnack(result?.message || 'تعذر فتح تسجيل الدخول عبر فيسبوك الآن');
+        } else {
+            showSnack('ميزة فيسبوك غير متاحة حالياً');
+        }
+    } catch (err) {
+        console.error('Facebook auth failed', err);
+        showSnack('تعذر التواصل مع فيسبوك الآن');
+    } finally {
+        if (button) {
+            button.disabled = false;
+            button.textContent = 'تسجيل عبر فيسبوك';
+        }
+    }
+}
+
 function renderAccountUi() {
     const button = document.getElementById('role-toggle-btn');
     const chip = document.getElementById('account-chip');
@@ -1083,6 +1157,9 @@ function openAuthModal() {
                 <div class="auth-actions">
                     <button class="btn-order primary" type="submit">${AUTH_UI_MODE === 'signup' ? 'إنشاء الحساب' : 'تسجيل الدخول'}</button>
                     <button class="btn-map" type="button" onclick="toggleAuthMode('${AUTH_UI_MODE === 'signup' ? 'signin' : 'signup'}')">${AUTH_UI_MODE === 'signup' ? 'لدي حساب بالفعل' : 'إنشاء حساب جديد'}</button>
+                </div>
+                <div class="auth-socials">
+                    <button class="btn-facebook" type="button" onclick="handleFacebookAuth()">تسجيل عبر فيسبوك</button>
                 </div>
             </form>
         </div>

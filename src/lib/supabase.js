@@ -212,6 +212,25 @@ async function signInWithGoogleSupabase(options = {}) {
     }
 }
 
+async function signInWithFacebookSupabase(options = {}) {
+    if (!window.supabaseClient) return { success: false, error: 'Supabase client not ready', message: 'لم يتم تهيئة Supabase بعد' };
+    try {
+        const redirectTo = window.location.origin;
+        const { data, error } = await window.supabaseClient.auth.signInWithOAuth({
+            provider: 'facebook',
+            options: {
+                redirectTo,
+                flow: 'pkce',
+                queryParams: { auth_type: 'rerequest', display: 'popup' }
+            }
+        });
+        if (error) throw error;
+        return { success: true, redirecting: true, data, options };
+    } catch (err) {
+        return { success: false, error: err, message: 'تعذر فتح تسجيل الدخول باستخدام فيسبوك الآن. استخدم البريد أو الرقم بدلاً من ذلك.' };
+    }
+}
+
 async function signOutFromSupabase() {
     return true;
 }
@@ -228,5 +247,6 @@ window.updateUserProfile = updateUserProfile;
 window.signInWithSupabase = signInWithSupabase;
 window.signUpWithSupabase = signUpWithSupabase;
 window.signInWithGoogleSupabase = signInWithGoogleSupabase;
+window.signInWithFacebookSupabase = signInWithFacebookSupabase;
 window.signOutFromSupabase = signOutFromSupabase;
 window.getSupabaseSessionUser = getSupabaseSessionUser;

@@ -576,6 +576,58 @@ body {
     font-size: 0.95rem;
 }
 
+.auth-socials {
+    margin-top: 8px;
+}
+
+.btn-facebook {
+    width: 100%;
+    border: none;
+    border-radius: 999px;
+    padding: 11px 14px;
+    background: linear-gradient(135deg, #1877f2, #0b64d8);
+    color: white;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.fullscreen-hint-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(7, 10, 16, 0.72);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2500;
+    padding: 16px;
+}
+
+.fullscreen-hint-card {
+    width: min(460px, 100%);
+    background: white;
+    border-radius: 18px;
+    padding: 22px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.26);
+    text-align: center;
+}
+
+.fullscreen-hint-card h3 {
+    margin: 0 0 8px;
+    color: #111827;
+}
+
+.fullscreen-hint-card p {
+    margin: 0 0 12px;
+    color: #64748b;
+}
+
+.fullscreen-hint-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
 .auth-mode-toggle {
     display: flex;
     gap: 8px;
@@ -1000,13 +1052,15 @@ body {
    ========================================================================== */
 @media (max-width: 768px) {
     .site-header {
-        padding: 10px 12px;
-        gap: 8px;
+        padding: 8px 10px;
+        gap: 6px;
         align-items: center;
+        min-height: auto;
     }
 
     .site-brand {
-        font-size: 1rem;
+        font-size: 0.95rem;
+        margin-left: 4px;
     }
 
     .site-search {
@@ -1016,9 +1070,11 @@ body {
 
     .site-actions {
         margin-right: auto;
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
         justify-content: flex-end;
         gap: 6px;
+        overflow-x: auto;
+        padding-bottom: 2px;
     }
 
     .cart-btn {
@@ -1028,8 +1084,8 @@ body {
     .support-btn,
     .role-toggle-btn,
     .cart-btn {
-        font-size: 0.9rem;
-        padding: 8px 10px;
+        font-size: 0.84rem;
+        padding: 7px 9px;
     }
 
     .screen {
@@ -1044,22 +1100,28 @@ body {
         font-size: 1.35rem;
     }
 
+    .welcome-content {
+        padding: 22px 18px;
+        width: min(100%, 520px);
+    }
+
     .welcome-content h1 {
-        font-size: 2rem;
+        font-size: 1.8rem;
         line-height: 1.2;
+        padding: 0 8px;
     }
 
     .categories-container,
     .products-grid {
         width: 100%;
         max-width: 100%;
-        margin: 12px 0 16px;
-        padding: 0 12px;
+        margin: 10px 0 14px;
+        padding: 0 10px;
     }
 
     .category-card {
-        height: 160px;
-        margin-bottom: 12px;
+        height: 140px;
+        margin-bottom: 10px;
         border-radius: 14px;
     }
 
@@ -1090,7 +1152,7 @@ body {
     }
 
     .product-info {
-        padding: 14px;
+        padding: 12px;
     }
 
     .product-modal {
@@ -1116,6 +1178,11 @@ body {
 
     .cart-drawer {
         max-width: 100%;
+    }
+
+    .fullscreen-hint-card {
+        width: min(92vw, 420px);
+        padding: 20px 16px;
     }
 }
 

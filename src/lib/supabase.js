@@ -114,8 +114,8 @@ async function signInWithSupabase(identifier, password, options = {}) {
     if (!window.supabaseClient) {
         const localUsers = JSON.parse(localStorage.getItem('mohamed-local-users') || '[]');
         const existing = localUsers.find(user => String(user.email || '').toLowerCase() === normalizedIdentifier || String(user.phone || '').toLowerCase() === normalizedIdentifier);
-        if (!existing) return { success: false, error: 'not_found', message: 'لا يوجد حساب بهذا البريد أو الرقم' };
-        if (String(existing.password || '') !== String(password || '')) return { success: false, error: 'invalid_password', message: 'كلمة المرور غير صحيحة' };
+        if (!existing) return { success: false, error: 'not_found', message: 'البريد أو الباسورد غلط' };
+        if (String(existing.password || '') !== String(password || '')) return { success: false, error: 'invalid_password', message: 'البريد أو الباسورد غلط' };
         return { success: true, user: existing, session: null, options };
     }
     try {
@@ -123,12 +123,12 @@ async function signInWithSupabase(identifier, password, options = {}) {
         if (!existing) {
             const localUsers = JSON.parse(localStorage.getItem('mohamed-local-users') || '[]');
             const localExisting = localUsers.find(user => String(user.email || '').toLowerCase() === normalizedIdentifier || String(user.phone || '').toLowerCase() === normalizedIdentifier);
-            if (!localExisting) return { success: false, error: 'not_found', message: 'لا يوجد حساب بهذا البريد أو الرقم' };
-            if (String(localExisting.password || '') !== String(password || '')) return { success: false, error: 'invalid_password', message: 'كلمة المرور غير صحيحة' };
+            if (!localExisting) return { success: false, error: 'not_found', message: 'البريد أو الباسورد غلط' };
+            if (String(localExisting.password || '') !== String(password || '')) return { success: false, error: 'invalid_password', message: 'البريد أو الباسورد غلط' };
             return { success: true, user: localExisting, session: null, options };
         }
         if (String(existing.password || '') !== String(password || '')) {
-            return { success: false, error: 'invalid_password', message: 'كلمة المرور غير صحيحة' };
+            return { success: false, error: 'invalid_password', message: 'البريد أو الباسورد غلط' };
         }
         return { success: true, user: existing, session: null, options };
     } catch (err) {

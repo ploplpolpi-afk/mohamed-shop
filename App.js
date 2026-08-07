@@ -1143,11 +1143,13 @@ function openAuthModal() {
             </div>
             <form class="auth-form" onsubmit="event.preventDefault(); saveAuthAccount('phone')">
                 <div class="auth-grid">
-                    <div class="auth-role-picker">
-                        <button type="button" class="${APP_STATE.role === 'buyer' ? 'active' : ''}" data-role="buyer" onclick="setSelectedAuthRole('buyer')">مشتري</button>
-                        <button type="button" class="${APP_STATE.role === 'seller' ? 'active' : ''}" data-role="seller" onclick="setSelectedAuthRole('seller')">تاجر</button>
-                        <button type="button" class="${APP_STATE.role === 'admin' ? 'active' : ''}" data-role="admin" onclick="setSelectedAuthRole('admin')">مدير</button>
-                    </div>
+                    ${AUTH_UI_MODE === 'signup' ? `
+                        <div class="auth-role-picker">
+                            <button type="button" class="${APP_STATE.role === 'buyer' ? 'active' : ''}" data-role="buyer" onclick="setSelectedAuthRole('buyer')">مشتري</button>
+                            <button type="button" class="${APP_STATE.role === 'seller' ? 'active' : ''}" data-role="seller" onclick="setSelectedAuthRole('seller')">تاجر</button>
+                            <button type="button" class="${APP_STATE.role === 'admin' ? 'active' : ''}" data-role="admin" onclick="setSelectedAuthRole('admin')">مدير</button>
+                        </div>
+                    ` : ''}
                     <input id="auth-name" placeholder="الاسم بالكامل" value="${escapeHtml(APP_STATE.accountName || '')}" />
                     <input id="auth-email" type="email" placeholder="البريد الإلكتروني أو رقم الهاتف" value="${escapeHtml(APP_STATE.accountPhone || '')}" />
                     <input id="auth-password" type="password" placeholder="كلمة المرور" />
@@ -1281,7 +1283,15 @@ async function saveAuthAccount(method = 'phone') {
         } else {
             result = await window.signInWithSupabase(identifier, password, { full_name: name, role: APP_STATE.role || 'buyer' });
             if (!result.success) {
-                const message = result.error === 'invalid_password' ? 'الباسورد غلط' : (result.message || 'بيانات الدخول غير صحيحة');
+                if (result.error === 'not_found') {
+                    AUTH_UI_MODE = 'signup';
+                    openAuthModal();
+                    showSnack('لا يوجد حساب بهذا البريد أو الرقم. يمكنك إنشاء حساب جديد الآن');
+                    const signupIdentifier = document.getElementById('auth-email');
+                    if (signupIdentifier) signupIdentifier.value = identifier;
+                    return;
+                }
+                const message = result.error === 'invalid_password' ? 'البريد أو الباسورد غلط' : (result.message || 'بيانات الدخول غير صحيحة');
                 showSnack(message);
                 const usernameInput = document.getElementById('auth-email');
                 if (usernameInput) usernameInput.value = '';

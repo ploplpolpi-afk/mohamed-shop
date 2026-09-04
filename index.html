@@ -6,6 +6,7 @@
     <title>محمد شوب - متجر الملابس المتكامل</title>
     <meta name="google-site-verification" content="حط_الكود_بتاع_جوجل_هنا" />
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="auth-styles.css">
     <script>
         (function(){
             function setVh(){
@@ -127,11 +128,19 @@
         <main class="checkout-container animate-fade-in"></main>
     </div>
 
+    <!-- Login Screen -->
+    <div id="login-screen" class="screen"></div>
+
+    <!-- Register Screen -->
+    <div id="register-screen" class="screen"></div>
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script type="module" src="src/lib/supabase.js"></script>
     <script type="module" src="src/components/ProductCard.js"></script>
     <script type="module" src="src/components/CheckoutForm.js"></script>
     <script type="module" src="src/pages/Home.js"></script>
+    <script src="src/pages/Login.js"></script>
+    <script src="src/pages/Register.js"></script>
     <script type="module" src="App.js"></script>
 </body>
 </html>

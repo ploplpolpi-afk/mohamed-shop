@@ -20,6 +20,7 @@ body {
     color: #222;
     min-height: 100vh;
     min-height: 100dvh;
+    min-height: 100svh;
     line-height: 1.5;
 }
 
@@ -31,7 +32,7 @@ body {
     top: 0;
     z-index: 1200;
     display: grid;
-    grid-template-columns: auto 1fr auto;
+    grid-template-columns: auto minmax(0, 1fr) auto;
     align-items: center;
     gap: 12px;
     padding: 12px 16px;
@@ -82,11 +83,18 @@ body {
 @media (max-width: 500px) {
     .site-header {
         padding: 10px;
+        gap: 8px;
+    }
+
+    .site-brand {
+        font-size: 0.95rem;
+        max-width: 100px;
     }
 
     .site-actions {
-        justify-content: flex-start;
+        justify-content: space-between;
         gap: 6px;
+        width: 100%;
     }
 
     .cart-btn {
@@ -95,7 +103,8 @@ body {
 
     .account-chip {
         padding: 7px 9px;
-        font-size: 0.9rem;
+        font-size: 0.86rem;
+        max-width: 100%;
     }
 }
 
@@ -153,6 +162,7 @@ body {
     flex-shrink: 0;
     flex-wrap: wrap;
     justify-content: flex-end;
+    min-width: 0;
 }
 
 .account-shell {
@@ -238,7 +248,7 @@ body {
    5. النافذة المنبثقة لتفاصيل المنتج (Product Detail Modal)
    ========================================================================== */
 .product-modal { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(8,8,10,0.48); z-index: 1600; padding: 10px; }
-.modal-card { background: #fff; width: 100%; max-width: 980px; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.35); overflow: hidden; position: relative; max-height: 95vh; overflow-y: auto; }
+.modal-card { background: #fff; width: min(100%, 980px); max-width: 980px; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.35); overflow: hidden; position: relative; max-height: min(95svh, 900px); overflow-y: auto; }
 .modal-close { position: absolute; right: 18px; top: 14px; background: none; border: none; font-size: 20px; cursor: pointer; z-index: 10; }
 .modal-body { display: flex; gap: 18px; padding: 22px; }
 .modal-gallery { flex: 1; display: flex; flex-direction: column; gap: 12px; width: 100%; }
@@ -289,12 +299,14 @@ body {
 .screen {
     display: none;
     min-height: calc(var(--vh, 1vh) * 100);
+    min-height: 100svh;
     width: 100%;
     max-width: 100%;
     box-sizing: border-box;
     opacity: 0;
     transition: opacity 0.4s ease-in-out;
     position: relative;
+    overflow-x: hidden;
 }
 
 .screen-locked::after {
@@ -339,6 +351,43 @@ body {
     animation: fadeInUp 0.5s ease forwards;
 }
 
+.screen.active > * {
+    animation: pageReveal 0.55s cubic-bezier(.2,.8,.2,1) both;
+}
+
+.screen.active > *:nth-child(2) { animation-delay: 0.08s; }
+
+@keyframes pageReveal {
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-card {
+    animation: cardPop 0.5s cubic-bezier(.2,.8,.2,1) both;
+}
+
+.recommendation-strip {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    color: #15324b;
+    background: linear-gradient(100deg, #e8f3f1, #fff8e8);
+    border: 1px solid #cfe3dd;
+    border-radius: 12px;
+    animation: pageReveal 0.55s ease both;
+}
+
+.recommendation-strip strong,
+.recommendation-strip small { display: block; }
+.recommendation-strip small { color: #577080; margin-top: 2px; }
+.recommendation-icon { color: #e58b2c; font-size: 1.35rem; }
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
+
 @keyframes fadeInUp {
     from {
         opacity: 0;
@@ -360,12 +409,14 @@ body {
     width: 100%;
     min-height: 100vh;
     min-height: 100dvh;
+    min-height: 100svh;
     padding: 20px;
 }
 
 .welcome-content {
+    width: min(680px, 100%);
     max-width: 680px;
-    padding: 34px;
+    padding: clamp(22px, 4.5vw, 34px);
     border-radius: 28px;
     background: rgba(255,255,255,0.09);
     backdrop-filter: blur(16px);
@@ -473,18 +524,21 @@ body {
     align-items: center;
     justify-content: center;
     z-index: 2000;
-    padding: 16px;
+    padding: 12px;
+    padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
 }
 
 .auth-modal-card {
     width: min(590px, 100%);
+    max-height: calc(100svh - 24px);
+    overflow-y: auto;
     background: linear-gradient(135deg, #ffffff 0%, #f9fbff 100%);
     border-radius: 24px;
     padding: 28px;
     box-shadow: 0 32px 90px rgba(0,0,0,0.28);
     position: relative;
     border: 1px solid #e4ebf7;
-    overflow: hidden;
+    overflow-x: hidden;
 }
 
 .auth-modal-card::before {
@@ -1058,6 +1112,10 @@ body {
         min-height: auto;
     }
 
+    .site-search {
+        min-width: 0;
+    }
+
     .site-brand {
         font-size: 0.95rem;
         margin-left: 4px;
@@ -1070,7 +1128,7 @@ body {
 
     .site-actions {
         margin-right: auto;
-        flex-wrap: nowrap;
+        flex-wrap: wrap;
         justify-content: flex-end;
         gap: 6px;
         overflow-x: auto;
@@ -1103,6 +1161,11 @@ body {
     .welcome-content {
         padding: 22px 18px;
         width: min(100%, 520px);
+    }
+
+    .auth-modal-card {
+        width: min(100%, 94vw);
+        padding: 18px;
     }
 
     .welcome-content h1 {
@@ -1178,6 +1241,7 @@ body {
 
     .cart-drawer {
         max-width: 100%;
+        width: 100%;
     }
 
     .fullscreen-hint-card {

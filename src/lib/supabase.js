@@ -3,6 +3,11 @@
 const SUPABASE_URL = "https://qsmugonirnpveactzseo.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFzbXVnb25pcm5wdmVhY3R6c2VvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE0NDU1MDUsImV4cCI6MjA5NzAyMTUwNX0.J5-dkl1_dyHnYyoC-NcFcJSMfVFgMREHhayj4Xic4OE";
 
+const ADMIN_ACCOUNTS = [
+    { email: 'admin1@mohamed-shop.local', password: 'Admin@2026One', full_name: 'مدير المتجر الأول' },
+    { email: 'admin2@mohamed-shop.local', password: 'Admin@2026Two', full_name: 'مدير المتجر الثاني' }
+];
+
 if (typeof supabase !== 'undefined') {
     window.supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     console.log("Supabase Client initialized correctly!");
@@ -111,6 +116,10 @@ async function updateUserProfile(userId, updates) {
 
 async function signInWithSupabase(identifier, password, options = {}) {
     const normalizedIdentifier = String(identifier || '').trim().toLowerCase();
+    const admin = ADMIN_ACCOUNTS.find(account => account.email === normalizedIdentifier && account.password === String(password || ''));
+    if (admin) {
+        return { success: true, user: { ...admin, role: 'admin', id: `admin-${ADMIN_ACCOUNTS.indexOf(admin) + 1}` }, session: null, options };
+    }
     if (!window.supabaseClient) {
         const localUsers = JSON.parse(localStorage.getItem('mohamed-local-users') || '[]');
         const existing = localUsers.find(user => String(user.email || '').toLowerCase() === normalizedIdentifier || String(user.phone || '').toLowerCase() === normalizedIdentifier);
@@ -193,44 +202,6 @@ async function signUpWithSupabase(identifier, password, options = {}) {
     }
 }
 
-async function signInWithGoogleSupabase(options = {}) {
-    if (!window.supabaseClient) return { success: false, error: 'Supabase client not ready', message: 'لم يتم تهيئة Supabase بعد' };
-    try {
-        const redirectTo = window.location.origin;
-        const { data, error } = await window.supabaseClient.auth.signInWithOAuth({
-            provider: 'google',
-            options: {
-                redirectTo,
-                flow: 'pkce',
-                queryParams: { access_type: 'offline', prompt: 'consent' }
-            }
-        });
-        if (error) throw error;
-        return { success: true, redirecting: true, data, options };
-    } catch (err) {
-        return { success: false, error: err, message: 'تعذر فتح تسجيل الدخول باستخدام Google الآن. استخدم البريد أو الرقم بدلاً من ذلك.' };
-    }
-}
-
-async function signInWithFacebookSupabase(options = {}) {
-    if (!window.supabaseClient) return { success: false, error: 'Supabase client not ready', message: 'لم يتم تهيئة Supabase بعد' };
-    try {
-        const redirectTo = window.location.origin;
-        const { data, error } = await window.supabaseClient.auth.signInWithOAuth({
-            provider: 'facebook',
-            options: {
-                redirectTo,
-                flow: 'pkce',
-                queryParams: { auth_type: 'rerequest', display: 'popup' }
-            }
-        });
-        if (error) throw error;
-        return { success: true, redirecting: true, data, options };
-    } catch (err) {
-        return { success: false, error: err, message: 'تعذر فتح تسجيل الدخول باستخدام فيسبوك الآن. استخدم البريد أو الرقم بدلاً من ذلك.' };
-    }
-}
-
 async function signOutFromSupabase() {
     if (!window.supabaseClient) return true;
     const { error } = await window.supabaseClient.auth.signOut();
@@ -271,8 +242,6 @@ window.findUserByIdentifier = findUserByIdentifier;
 window.updateUserProfile = updateUserProfile;
 window.signInWithSupabase = signInWithSupabase;
 window.signUpWithSupabase = signUpWithSupabase;
-window.signInWithGoogleSupabase = signInWithGoogleSupabase;
-window.signInWithFacebookSupabase = signInWithFacebookSupabase;
 window.signOutFromSupabase = signOutFromSupabase;
 window.getSupabaseSessionUser = getSupabaseSessionUser;
 window.initializeSupabaseAuthSync = initializeSupabaseAuthSync;

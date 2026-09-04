@@ -17,7 +17,7 @@ function loadAppState() {
     try {
         const raw = localStorage.getItem(STORAGE_KEYS.appState);
         if (!raw) {
-            return { role: 'buyer', products: createDefaultProducts(), sellerBalances: {}, orders: [], isLoggedIn: false, accountName: '', accountPhone: '', accountMethod: 'phone', authUserId: null, sellerDisplayName: '' };
+            return { role: 'buyer', products: createDefaultProducts(), sellerBalances: {}, orders: [], searchHistory: [], isLoggedIn: false, accountName: '', accountPhone: '', accountMethod: 'phone', authUserId: null, sellerDisplayName: '' };
         }
         const parsed = JSON.parse(raw);
         return {
@@ -25,6 +25,7 @@ function loadAppState() {
             products: Array.isArray(parsed.products) && parsed.products.length ? parsed.products : createDefaultProducts(),
             sellerBalances: parsed.sellerBalances || {},
             orders: parsed.orders || [],
+            searchHistory: Array.isArray(parsed.searchHistory) ? parsed.searchHistory.slice(0, 20) : [],
             isLoggedIn: Boolean(parsed.isLoggedIn),
             accountName: parsed.accountName || '',
             accountPhone: parsed.accountPhone || '',
@@ -34,7 +35,7 @@ function loadAppState() {
         };
     } catch (e) {
         console.error('فشل تحميل الحالة:', e);
-        return { role: 'buyer', products: createDefaultProducts(), sellerBalances: {}, orders: [], isLoggedIn: false, accountName: '', accountPhone: '', accountMethod: 'phone', authUserId: null, sellerDisplayName: '' };
+        return { role: 'buyer', products: createDefaultProducts(), sellerBalances: {}, orders: [], searchHistory: [], isLoggedIn: false, accountName: '', accountPhone: '', accountMethod: 'phone', authUserId: null, sellerDisplayName: '' };
     }
 }
 
@@ -45,7 +46,7 @@ async function hydrateCatalogFromSupabase() {
         APP_STATE.products = remoteProducts.map(normalizeProduct);
         persistAppState();
         if (typeof renderProductsGrid === 'function') {
-            renderProductsGrid(getCatalogProducts(), 'المنتجات');
+            renderProductsGrid(getPersonalizedProducts(), 'المنتجات');
         }
     }
 }
@@ -308,12 +309,32 @@ function getAllProducts() {
     return getCatalogProducts();
 }
 
+function getPersonalizedProducts(products = getCatalogProducts()) {
+    const history = Array.isArray(APP_STATE.searchHistory) ? APP_STATE.searchHistory : [];
+    if (!history.length) return products;
+    const interests = history.reduce((scores, query, index) => {
+        const term = String(query || '').toLowerCase();
+        if (term) scores[term] = (scores[term] || 0) + Math.max(1, history.length - index);
+        return scores;
+    }, {});
+    return [...products].sort((first, second) => {
+        const score = product => Object.entries(interests).reduce((total, [term, weight]) => {
+            const text = `${product.name} ${product.type} ${product.material} ${product.category}`.toLowerCase();
+            return total + (text.includes(term) ? weight : 0);
+        }, 0);
+        return score(second) - score(first);
+    });
+}
+
 function renderProductsGrid(products, title = 'المنتجات') {
     const productsGrid = document.querySelector('.products-grid');
     if(!productsGrid) return;
-    const list = Array.isArray(products) ? products : getCatalogProducts();
+    const list = Array.isArray(products) ? products : getPersonalizedProducts();
+    const recommendation = title === 'المنتجات' && APP_STATE.searchHistory?.length
+        ? '<div class="recommendation-strip" role="status"><span class="recommendation-icon">✦</span><div><strong>ترشيحات مخصصة لك</strong><small>مرتبة حسب عمليات البحث الأخيرة</small></div></div>'
+        : '';
     productsGrid.innerHTML = list.length
-        ? list.map(product => (typeof window.renderProductCard === 'function' ? window.renderProductCard(product) : '')).join('')
+        ? recommendation + list.map(product => (typeof window.renderProductCard === 'function' ? window.renderProductCard(product) : '')).join('')
         : '<div class="empty-state">لا توجد منتجات حالياً</div>';
     if (title) {
         const titleEl = document.getElementById('current-section-title');
@@ -325,6 +346,8 @@ function renderProductsGrid(products, title = 'المنتجات') {
 function performSearch() {
     const q = document.getElementById('site-search-input').value.trim();
     if(!q) return showSnack('اكتب ما تريد البحث عنه');
+    APP_STATE.searchHistory = [q, ...(APP_STATE.searchHistory || []).filter(item => item.toLowerCase() !== q.toLowerCase())].slice(0, 20);
+    persistAppState();
     const list = getAllProducts();
     const lower = q.toLowerCase();
     const results = list.filter(product => `${product.name} ${product.type} ${product.material} ${product.category}`.toLowerCase().includes(lower));
@@ -755,7 +778,8 @@ function toggleRoleMode() {
     if (APP_STATE.isLoggedIn) {
         openAccountPanel();
     } else {
-        openAuthModal();
+        // Show login screen instead of modal
+        showScreen('login-screen');
     }
 }
 
@@ -923,7 +947,7 @@ function openAccountPanel() {
                 <div class="account-panel-row"><strong>الاسم:</strong> ${escapeHtml(APP_STATE.accountName || 'مستخدم')}</div>
                 <div class="account-panel-row"><strong>البريد أو الهاتف:</strong> ${escapeHtml(APP_STATE.accountPhone || '-')}</div>
                 <div class="account-panel-row"><strong>النمط:</strong> ${escapeHtml(roleLabel)}</div>
-                <div class="account-panel-row"><strong>طريقة الدخول:</strong> ${escapeHtml(APP_STATE.accountMethod === 'google' ? 'Google' : 'البريد/الرقم')}</div>
+                <div class="account-panel-row"><strong>طريقة الدخول:</strong> البريد الإلكتروني أو رقم الهاتف</div>
             </div>
             ${dashboardContent}
             <form class="auth-form" onsubmit="event.preventDefault(); updateAccountProfile()">
@@ -934,7 +958,6 @@ function openAccountPanel() {
                     <div class="auth-role-picker">
                         <button type="button" class="${APP_STATE.role === 'buyer' ? 'active' : ''}" data-role="buyer" onclick="setLocalAccountRole('buyer')">مشتري</button>
                         <button type="button" class="${APP_STATE.role === 'seller' ? 'active' : ''}" data-role="seller" onclick="setLocalAccountRole('seller')">تاجر</button>
-                        <button type="button" class="${APP_STATE.role === 'admin' ? 'active' : ''}" data-role="admin" onclick="setLocalAccountRole('admin')">مدير</button>
                     </div>
                 </div>
                 <div class="auth-actions">
@@ -948,6 +971,10 @@ function openAccountPanel() {
 }
 
 function setLocalAccountRole(role) {
+    if (role === 'admin') {
+        showSnack('صلاحية المدير متاحة للحسابات الإدارية فقط');
+        return;
+    }
     APP_STATE.role = role;
     if (role === 'seller') {
         APP_STATE.sellerDisplayName = APP_STATE.accountName || APP_STATE.accountPhone || '';
@@ -1076,37 +1103,6 @@ async function requestFullscreenMode() {
     }
 }
 
-async function handleFacebookAuth() {
-    const button = document.querySelector('.btn-facebook');
-    if (button) {
-        button.disabled = true;
-        button.textContent = 'جاري الاتصال بفيسبوك...';
-    }
-    try {
-        if (typeof window.signInWithFacebookSupabase === 'function') {
-            const result = await window.signInWithFacebookSupabase({
-                full_name: document.getElementById('auth-name')?.value.trim() || APP_STATE.accountName || 'مستخدم',
-                role: APP_STATE.role || 'buyer'
-            });
-            if (result?.success) {
-                showSnack('تم بدء تسجيل الدخول عبر فيسبوك');
-                return;
-            }
-            showSnack(result?.message || 'تعذر فتح تسجيل الدخول عبر فيسبوك الآن');
-        } else {
-            showSnack('ميزة فيسبوك غير متاحة حالياً');
-        }
-    } catch (err) {
-        console.error('Facebook auth failed', err);
-        showSnack('تعذر التواصل مع فيسبوك الآن');
-    } finally {
-        if (button) {
-            button.disabled = false;
-            button.textContent = 'تسجيل عبر فيسبوك';
-        }
-    }
-}
-
 function renderAccountUi() {
     const button = document.getElementById('role-toggle-btn');
     const chip = document.getElementById('account-chip');
@@ -1115,7 +1111,7 @@ function renderAccountUi() {
     }
     if (chip) {
         if (APP_STATE.isLoggedIn) {
-            const roleLabel = APP_STATE.role === 'seller' ? 'تاجر' : 'مشتري';
+            const roleLabel = APP_STATE.role === 'admin' ? 'مدير' : APP_STATE.role === 'seller' ? 'تاجر' : 'مشتري';
             chip.innerHTML = `<span class="account-chip-icon">👤</span><span>${escapeHtml(APP_STATE.accountName || 'مستخدم')} · ${roleLabel}</span>`;
             chip.style.display = 'inline-flex';
         } else {
@@ -1147,7 +1143,6 @@ function openAuthModal() {
                         <div class="auth-role-picker">
                             <button type="button" class="${APP_STATE.role === 'buyer' ? 'active' : ''}" data-role="buyer" onclick="setSelectedAuthRole('buyer')">مشتري</button>
                             <button type="button" class="${APP_STATE.role === 'seller' ? 'active' : ''}" data-role="seller" onclick="setSelectedAuthRole('seller')">تاجر</button>
-                            <button type="button" class="${APP_STATE.role === 'admin' ? 'active' : ''}" data-role="admin" onclick="setSelectedAuthRole('admin')">مدير</button>
                         </div>
                     ` : ''}
                     <input id="auth-name" placeholder="الاسم بالكامل" value="${escapeHtml(APP_STATE.accountName || '')}" />
@@ -1159,9 +1154,6 @@ function openAuthModal() {
                 <div class="auth-actions">
                     <button class="btn-order primary" type="submit">${AUTH_UI_MODE === 'signup' ? 'إنشاء الحساب' : 'تسجيل الدخول'}</button>
                     <button class="btn-map" type="button" onclick="toggleAuthMode('${AUTH_UI_MODE === 'signup' ? 'signin' : 'signup'}')">${AUTH_UI_MODE === 'signup' ? 'لدي حساب بالفعل' : 'إنشاء حساب جديد'}</button>
-                </div>
-                <div class="auth-socials">
-                    <button class="btn-facebook" type="button" onclick="handleFacebookAuth()">تسجيل عبر فيسبوك</button>
                 </div>
             </form>
         </div>
@@ -1362,7 +1354,7 @@ async function submitSellerProduct(e) {
     if (typeof window.syncProductsToSupabase === 'function') {
         await window.syncProductsToSupabase(getCatalogProducts());
     }
-    renderProductsGrid(getCatalogProducts(), 'المنتجات');
+    renderProductsGrid(getPersonalizedProducts(), 'المنتجات');
     closeSellerPanel();
     showSnack('تم إضافة المنتج ومزامنته في المتجر');
 }
@@ -1438,6 +1430,7 @@ const APP_GLOBALS = {
     openCart,
     closeCart,
     renderProductsGrid,
+    getPersonalizedProducts,
     renderCheckoutForm,
     renderCheckoutFormFallback,
     updatePaymentFields,
@@ -1490,13 +1483,33 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('categories-screen').innerHTML = window.renderCategoriesScreen();
     }
 
+    // إضافة تأخير صغير للانتظار حتى تحمل جميع الملفات من type="module"
+    setTimeout(() => {
+        console.log('Checking for renderLoginScreen:', typeof window.renderLoginScreen);
+        console.log('Checking for renderRegisterScreen:', typeof window.renderRegisterScreen);
+        
+        // رص شاشات تسجيل الدخول والتسجيل
+        if(typeof window.renderLoginScreen === 'function') {
+            document.getElementById('login-screen').outerHTML = window.renderLoginScreen();
+            console.log('Login screen rendered');
+        } else {
+            console.warn('renderLoginScreen is not a function');
+        }
+        if(typeof window.renderRegisterScreen === 'function') {
+            document.getElementById('register-screen').outerHTML = window.renderRegisterScreen();
+            console.log('Register screen rendered');
+        } else {
+            console.warn('renderRegisterScreen is not a function');
+        }
+    }, 100);
+
     if (typeof window.initializeSupabaseAuthSync === 'function') {
         window.initializeSupabaseAuthSync();
     }
 
     const productsGrid = document.querySelector('.products-grid');
     if(productsGrid && typeof window.renderProductCard === 'function') {
-        renderProductsGrid(getCatalogProducts(), 'المنتجات');
+        renderProductsGrid(getPersonalizedProducts(), 'المنتجات');
     }
 
     initializeProductInteractions();

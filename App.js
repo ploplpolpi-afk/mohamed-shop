@@ -1,3 +1,6 @@
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+
 const STORAGE_KEYS = {
     appState: 'mohamed-shop-app-state-v1',
     orders: 'mohamed-shop-orders-v1'
@@ -570,24 +573,96 @@ function previewTransferImage() {
     preview.textContent = `تم اختيار الملف: ${file.name}`;
 }
 
-function openLocationPicker() {
+let locationPickerMap = null;
+let locationPickerMarker = null;
+let pickedLocation = null;
+
+function setPickedLocation(latitude, longitude) {
+    const lat = Number(latitude);
+    const lon = Number(longitude);
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
+
+    pickedLocation = { lat: lat.toFixed(6), lon: lon.toFixed(6) };
+    const coordsText = document.getElementById('picked-coords');
+    const pickerCoords = document.getElementById('location-picker-coordinates');
+    const latInput = document.getElementById('client-lat');
+    const lonInput = document.getElementById('client-lon');
+    if (coordsText) coordsText.textContent = `${pickedLocation.lat}, ${pickedLocation.lon}`;
+    if (pickerCoords) pickerCoords.textContent = `${pickedLocation.lat}, ${pickedLocation.lon}`;
+    if (latInput) latInput.value = pickedLocation.lat;
+    if (lonInput) lonInput.value = pickedLocation.lon;
+
+    const point = [lat, lon];
+    if (locationPickerMarker) locationPickerMarker.setLatLng(point);
+    else if (locationPickerMap) locationPickerMarker = L.marker(point).addTo(locationPickerMap);
+}
+
+function closeLocationPicker() {
+    locationPickerMap?.remove();
+    locationPickerMap = null;
+    locationPickerMarker = null;
+    document.getElementById('location-picker-overlay')?.remove();
+}
+
+function confirmLocationSelection() {
+    if (!pickedLocation) return showSnack('اضغط على الخريطة لاختيار موقع التوصيل');
+    closeLocationPicker();
+    showSnack('تم حفظ موقع التوصيل');
+}
+
+function locateOnMap() {
     if (!navigator.geolocation) return showSnack('المتصفح لا يدعم تحديد الموقع');
-    showSnack('جاري تحديد موقعك...');
-    navigator.geolocation.getCurrentPosition((pos) => {
-        const lat = pos.coords.latitude.toFixed(6);
-        const lon = pos.coords.longitude.toFixed(6);
-        const coordsText = document.getElementById('picked-coords');
-        const latInput = document.getElementById('client-lat');
-        const lonInput = document.getElementById('client-lon');
-        if (coordsText) coordsText.textContent = `${lat}, ${lon}`;
-        if (latInput) latInput.value = lat;
-        if (lonInput) lonInput.value = lon;
-        window.open(`https://www.google.com/maps?q=${lat},${lon}`, '_blank', 'noopener,noreferrer');
-        showSnack('تم اختيار الموقع بنجاح');
-    }, (err) => {
-        console.error(err);
-        showSnack('لم نتمكن من تحديد موقعك');
-    }, { timeout: 8000 });
+    showSnack('جارٍ تحديد موقعك...');
+    navigator.geolocation.getCurrentPosition(position => {
+        const point = [position.coords.latitude, position.coords.longitude];
+        locationPickerMap?.setView(point, 16);
+        setPickedLocation(...point);
+    }, error => {
+        console.error('تعذر تحديد الموقع الحالي:', error);
+        showSnack('تعذر تحديد موقعك. يمكنك اختيار النقطة يدويًا على الخريطة.');
+    }, { enableHighAccuracy: true, timeout: 12000, maximumAge: 30000 });
+}
+
+function openLocationPicker() {
+    closeLocationPicker();
+    pickedLocation = null;
+    const savedLat = Number(document.getElementById('client-lat')?.value);
+    const savedLon = Number(document.getElementById('client-lon')?.value);
+    const hasSavedPoint = Number.isFinite(savedLat) && Number.isFinite(savedLon) && savedLat !== 0 && savedLon !== 0;
+    const center = hasSavedPoint ? [savedLat, savedLon] : [30.0444, 31.2357];
+
+    const overlay = document.createElement('div');
+    overlay.id = 'location-picker-overlay';
+    overlay.className = 'location-picker-overlay';
+    overlay.innerHTML = `
+        <section class="location-picker-dialog" role="dialog" aria-modal="true" aria-labelledby="location-picker-title">
+            <header class="location-picker-header">
+                <div>
+                    <h3 id="location-picker-title">موقع التوصيل</h3>
+                    <p id="location-picker-coordinates">اضغط على الخريطة لتحديد الموقع</p>
+                </div>
+                <button type="button" class="location-picker-close" aria-label="إغلاق" onclick="closeLocationPicker()">×</button>
+            </header>
+            <div id="location-picker-map" aria-label="خريطة اختيار موقع التوصيل"></div>
+            <footer class="location-picker-actions">
+                <button type="button" class="location-current-button" onclick="locateOnMap()">استخدم موقعي الحالي</button>
+                <button type="button" class="location-confirm-button" onclick="confirmLocationSelection()">تأكيد الموقع</button>
+            </footer>
+        </section>
+    `;
+    overlay.addEventListener('click', event => {
+        if (event.target === overlay) closeLocationPicker();
+    });
+    document.body.appendChild(overlay);
+
+    locationPickerMap = L.map('location-picker-map').setView(center, hasSavedPoint ? 15 : 6);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    }).addTo(locationPickerMap);
+    locationPickerMap.on('click', event => setPickedLocation(event.latlng.lat, event.latlng.lng));
+    if (hasSavedPoint) setPickedLocation(savedLat, savedLon);
+    requestAnimationFrame(() => locationPickerMap?.invalidateSize());
 }
 
 function attachCheckoutFormListener() {
@@ -1436,6 +1511,9 @@ const APP_GLOBALS = {
     updatePaymentFields,
     previewTransferImage,
     openLocationPicker,
+    closeLocationPicker,
+    locateOnMap,
+    confirmLocationSelection,
     openMapsForDelivery,
     removeFromCart,
     goToCheckout,

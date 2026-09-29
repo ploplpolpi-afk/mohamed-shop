@@ -1,16 +1,18 @@
 // src/lib/supabase.js
 
-const SUPABASE_URL = "https://qsmugonirnpveactzseo.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFzbXVnb25pcm5wdmVhY3R6c2VvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE0NDU1MDUsImV4cCI6MjA5NzAyMTUwNX0.J5-dkl1_dyHnYyoC-NcFcJSMfVFgMREHhayj4Xic4OE";
+const SUPABASE_URL = String(import.meta.env.VITE_SUPABASE_URL || '').trim().replace(/\/+$/, '');
+const SUPABASE_KEY = String(import.meta.env.VITE_SUPABASE_ANON_KEY || '').trim();
 
 const ADMIN_ACCOUNTS = [
     { email: 'admin1@mohamed-shop.local', password: 'Admin@2026One', full_name: 'مدير المتجر الأول' },
     { email: 'admin2@mohamed-shop.local', password: 'Admin@2026Two', full_name: 'مدير المتجر الثاني' }
 ];
 
-if (typeof supabase !== 'undefined') {
+if (typeof supabase !== 'undefined' && SUPABASE_URL && SUPABASE_KEY) {
     window.supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     console.log("Supabase Client initialized correctly!");
+} else if (!SUPABASE_URL || !SUPABASE_KEY) {
+    console.error('Supabase is not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in .env.local.');
 } else {
     console.error("Supabase library not loaded. Make sure the Supabase CDN script is included in index.html.");
 }
@@ -63,8 +65,10 @@ async function loadProductsFromSupabase() {
 
 async function saveOrderToSupabase(orderData) {
     if (!window.supabaseClient) throw new Error('اتصال قاعدة البيانات غير متاح');
+    const orderId = crypto.randomUUID();
 
     const payload = {
+        id: orderId,
         items: orderData.items || [],
         total: Number(orderData.total || 0),
         status: orderData.status || 'pending',
@@ -83,16 +87,12 @@ async function saveOrderToSupabase(orderData) {
         lat: orderData.lat !== '' && orderData.lat != null ? Number(orderData.lat) : null,
         lon: orderData.lon !== '' && orderData.lon != null ? Number(orderData.lon) : null
     };
-    const { data, error } = await window.supabaseClient
-        .from('orders')
-        .insert(payload)
-        .select('id, created_at')
-        .single();
+    const { error } = await window.supabaseClient.from('orders').insert(payload);
     if (error) {
         console.error('Supabase order save failed:', error);
         throw error;
     }
-    return data;
+    return { id: orderId };
 }
 
 async function findUserByIdentifier(identifier) {

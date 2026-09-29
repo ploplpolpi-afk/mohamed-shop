@@ -1,5 +1,6 @@
 -- Add columns to orders table to match frontend inserts
 alter table if exists orders
+  add column if not exists metadata jsonb,
   add column if not exists product_id text,
   add column if not exists product_name text,
   add column if not exists seller_name text,

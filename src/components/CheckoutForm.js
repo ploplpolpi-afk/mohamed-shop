@@ -1,11 +1,25 @@
 ﻿// src/components/CheckoutForm.js
 
-function readFileAsBase64(file) {
+async function compressTransferImage(file) {
+    if (!file.type.startsWith('image/')) throw new Error('يجب اختيار ملف صورة صالح');
+    if (file.size > 10 * 1024 * 1024) throw new Error('حجم صورة التحويل يجب ألا يتجاوز 10 ميجابايت');
+
+    const image = await createImageBitmap(file);
+    const scale = Math.min(1, 1200 / Math.max(image.width, image.height));
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.round(image.width * scale);
+    canvas.height = Math.round(image.height * scale);
+    canvas.getContext('2d').drawImage(image, 0, 0, canvas.width, canvas.height);
+    image.close();
+
+    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/webp', 0.72));
+    if (!blob) throw new Error('تعذر ضغط صورة التحويل');
+
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = () => resolve(reader.result);
         reader.onerror = () => reject(new Error('فشل تحويل صورة التحويل'));
-        reader.readAsDataURL(file);
+        reader.readAsDataURL(blob);
     });
 }
 
@@ -45,10 +59,10 @@ async function handleOrderSubmit(e) {
         return;
     }
 
-    let transferImageBase64 = null;
+    let transferImage = null;
     if (transferFile) {
         try {
-            transferImageBase64 = await readFileAsBase64(transferFile);
+            transferImage = await compressTransferImage(transferFile);
         } catch (readErr) {
             console.error('فشل قراءة صورة التحويل:', readErr);
             alert('حدث خطأ أثناء قراءة صورة التحويل. حاول مرة أخرى.');
@@ -110,38 +124,41 @@ async function handleOrderSubmit(e) {
         metadata: {
             payment_method: paymentMethod,
             vodafone_cash_number: paymentMethod === 'فودافون كاش' ? '01029481893' : null,
-            transfer_image: transferImageBase64,
+            transfer_image: transferImage,
             notes: additionalNotes
         }
     };
 
     try {
+        if (typeof window.saveOrderToSupabase !== 'function') {
+            throw new Error('تعذر الاتصال بخدمة حفظ الطلبات');
+        }
+        const savedOrder = await window.saveOrderToSupabase({
+            ...orderData,
+            product_id: productId || (product?.id || ''),
+            seller_name: sellerName,
+            customer_name: name,
+            customer_phone: phone
+        });
+
         if (typeof window.decreaseStockAndUpdateBalance === 'function') {
             window.decreaseStockAndUpdateBalance(productId || (product?.id || ''), productQty);
         }
         if (typeof window.persistLocalOrder === 'function') {
-            window.persistLocalOrder({
+            const localOrderData = {
                 ...orderData,
+                id: savedOrder.id,
+                metadata: { ...orderData.metadata, transfer_image: null },
                 productId: productId || (product?.id || ''),
                 sellerName,
                 customerName: name,
                 customerPhone: phone
-            });
+            };
+            window.persistLocalOrder(localOrderData);
         }
 
-        if (typeof window.saveOrderToSupabase === 'function') {
-            await window.saveOrderToSupabase({
-                ...orderData,
-                product_id: productId || (product?.id || ''),
-                seller_name: sellerName,
-                customer_name: name,
-                customer_phone: phone,
-                created_at: new Date().toISOString()
-            });
-        }
-
-        console.log('✅ تم حفظ الأوردر بنجاح', orderData);
-        alert('تم إرسال طلبك بنجاح!');
+        console.log('تم حفظ الطلب بنجاح', savedOrder.id);
+        alert(`تم إرسال طلبك بنجاح! رقم الطلب: ${savedOrder.id}`);
 
     } catch (err) {
         console.error('⛔ خطأ أثناء الإرسال:', err);

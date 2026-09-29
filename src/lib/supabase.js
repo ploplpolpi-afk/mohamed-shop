@@ -62,31 +62,37 @@ async function loadProductsFromSupabase() {
 }
 
 async function saveOrderToSupabase(orderData) {
-    if (!window.supabaseClient) return false;
-    try {
-        const payload = {
-            items: orderData.items || [],
-            total: Number(orderData.total || 0),
-            status: orderData.status || 'pending',
-            shipping_address: orderData.shipping_address || null,
-            metadata: orderData.metadata || null,
-            product_name: orderData.items?.[0]?.name || null,
-            size: orderData.size || null,
-            payment_method: orderData.payment_method || null,
-            client_name: orderData.client_name || orderData.shipping_address?.full_name || null,
-            client_phone: orderData.client_phone || orderData.shipping_address?.phone || null,
-            client_address: orderData.client_address || orderData.shipping_address?.address || null,
-            lat: orderData.lat ? Number(orderData.lat) : null,
-            lon: orderData.lon ? Number(orderData.lon) : null,
-            created_at: new Date().toISOString()
-        };
-        const { error } = await window.supabaseClient.from('orders').insert([payload]);
-        if (error) throw error;
-        return true;
-    } catch (err) {
-        console.error('Supabase order save failed:', err);
-        return false;
+    if (!window.supabaseClient) throw new Error('اتصال قاعدة البيانات غير متاح');
+
+    const payload = {
+        items: orderData.items || [],
+        total: Number(orderData.total || 0),
+        status: orderData.status || 'pending',
+        shipping_address: orderData.shipping_address || null,
+        metadata: orderData.metadata || null,
+        product_id: orderData.product_id || null,
+        product_name: orderData.items?.[0]?.name || null,
+        seller_name: orderData.seller_name || null,
+        customer_name: orderData.customer_name || orderData.client_name || null,
+        customer_phone: orderData.customer_phone || orderData.client_phone || null,
+        size: orderData.size || null,
+        payment_method: orderData.payment_method || null,
+        client_name: orderData.client_name || orderData.shipping_address?.full_name || null,
+        client_phone: orderData.client_phone || orderData.shipping_address?.phone || null,
+        client_address: orderData.client_address || orderData.shipping_address?.address || null,
+        lat: orderData.lat !== '' && orderData.lat != null ? Number(orderData.lat) : null,
+        lon: orderData.lon !== '' && orderData.lon != null ? Number(orderData.lon) : null
+    };
+    const { data, error } = await window.supabaseClient
+        .from('orders')
+        .insert(payload)
+        .select('id, created_at')
+        .single();
+    if (error) {
+        console.error('Supabase order save failed:', error);
+        throw error;
     }
+    return data;
 }
 
 async function findUserByIdentifier(identifier) {

@@ -1,7 +1,7 @@
 // src/lib/supabase.js
 
-const SUPABASE_URL = String(import.meta.env.VITE_SUPABASE_URL || '').trim().replace(/\/+$/, '');
-const SUPABASE_KEY = String(import.meta.env.VITE_SUPABASE_ANON_KEY || '').trim();
+const SUPABASE_URL = 'https://eapufiqfkvcffsizzgff.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVhcHVmaXFma3ZjZmZzaXp6Z2ZmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExOTEwNDAsImV4cCI6MjA5Njc2NzA0MH0.V9LgLNtiibG6oFaenIjR6uj-oqMr4-88ZWKvv0b6csg';
 
 const ADMIN_ACCOUNTS = [
     { email: 'admin1@mohamed-shop.local', password: 'Admin@2026One', full_name: 'مدير المتجر الأول' },
@@ -11,8 +11,6 @@ const ADMIN_ACCOUNTS = [
 if (typeof supabase !== 'undefined' && SUPABASE_URL && SUPABASE_KEY) {
     window.supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     console.log("Supabase Client initialized correctly!");
-} else if (!SUPABASE_URL || !SUPABASE_KEY) {
-    console.error('Supabase is not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in .env.local.');
 } else {
     console.error("Supabase library not loaded. Make sure the Supabase CDN script is included in index.html.");
 }

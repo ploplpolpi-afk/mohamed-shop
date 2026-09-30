@@ -1,6 +1,3 @@
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
-
 const STORAGE_KEYS = {
     appState: 'mohamed-shop-app-state-v1',
     orders: 'mohamed-shop-orders-v1'

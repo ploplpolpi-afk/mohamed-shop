@@ -5,23 +5,11 @@
 /* Auth Screens */
 #login-screen,
 #register-screen {
-    background: linear-gradient(135deg, #132238 0%, #274c77 58%, #e58b2c 160%);
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     justify-content: center;
     align-items: center;
     padding: 20px;
     overflow-y: auto;
-}
-
-.auth-header {
-    width: min(540px, 100%);
-    border-radius: 14px 14px 0 0;
-    padding: 18px 24px 12px;
-}
-
-@media (max-width: 560px) {
-    #login-screen, #register-screen { padding: 10px; }
-    .auth-header { padding: 14px 16px 8px; }
-    .auth-card { padding: 22px 18px; border-radius: 0 0 14px 14px; }
 }
 
 .auth-header {

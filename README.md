@@ -33,10 +33,6 @@ npm run build
 npm run preview
 ```
 
-### إعداد Supabase
-
-انسخ `.env.example` إلى `.env.local`، ثم أضف رابط المشروع ومفتاح `anon` من إعدادات مشروعك في Supabase. لا تضع بيانات مشروعك في ملفات Git. أعد تشغيل خادم Vite بعد تعديل `.env.local`.
-
 ---
 
 ## 📱 نظام المصادقة / Authentication System

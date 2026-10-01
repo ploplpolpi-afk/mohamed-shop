@@ -5,7 +5,6 @@
 
 function renderRegisterScreen() {
     return `
-        <div id="register-screen" class="screen">
             <header class="main-header auth-header">
                 <button class="back-btn" onclick="showScreen('welcome-screen')">◄ الرئيسية</button>
                 <h2>إنشاء حساب جديد</h2>
@@ -150,6 +149,19 @@ function renderRegisterScreen() {
                         </button>
                     </form>
 
+                    <div class="auth-divider">
+                        <span>أو</span>
+                    </div>
+
+                    <div class="social-login">
+                        <button type="button" class="btn-social btn-facebook" onclick="handleFacebookAuthRegister()">
+                            <span>🔵 فيسبوك</span>
+                        </button>
+                        <button type="button" class="btn-social btn-google" onclick="handleGoogleAuthRegister()">
+                            <span>🔴 جوجل</span>
+                        </button>
+                    </div>
+
                     <div class="auth-footer">
                         <p>هل لديك حساب بالفعل؟ 
                             <button type="button" class="link-btn" onclick="showScreen('login-screen')">
@@ -159,7 +171,6 @@ function renderRegisterScreen() {
                     </div>
                 </div>
             </main>
-        </div>
     `;
 }
 
@@ -399,6 +410,51 @@ function clearRegisterErrors() {
 }
 
 /**
+ * Facebook registration handler
+ */
+async function handleFacebookAuthRegister() {
+    showSnack('جاري الاتصال بفيسبوك...');
+    try {
+        if (typeof window.signInWithFacebookSupabase === 'function') {
+            const result = await window.signInWithFacebookSupabase({
+                full_name: 'مستخدم فيسبوك',
+                role: Array.from(document.getElementsByName('account-type')).find(r => r.checked)?.value || 'buyer'
+            });
+            if (result?.success) {
+                APP_STATE.isLoggedIn = true;
+                persistAppState();
+                updateRoleButton();
+                showSnack('✅ تم إنشاء الحساب عبر فيسبوك');
+                showScreen('welcome-screen');
+                return;
+            }
+        }
+        showSnack('❌ تعذر إنشاء حساب عبر فيسبوك');
+    } catch (error) {
+        console.error('Facebook registration error:', error);
+        showSnack('❌ خطأ في الاتصال بفيسبوك');
+    }
+}
+
+/**
+ * Google registration handler
+ */
+async function handleGoogleAuthRegister() {
+    showSnack('جاري الاتصال بجوجل...');
+    try {
+        if (typeof window.syncGoogleAccountFromSupabase === 'function') {
+            await window.syncGoogleAccountFromSupabase();
+            showSnack('✅ تم إنشاء الحساب عبر جوجل');
+            return;
+        }
+        showSnack('❌ تعذر إنشاء حساب عبر جوجل');
+    } catch (error) {
+        console.error('Google registration error:', error);
+        showSnack('❌ خطأ في الاتصال بجوجل');
+    }
+}
+
+/**
  * Show terms modal
  */
 function showTermsModal() {
@@ -431,5 +487,7 @@ function showPrivacyModal() {
 window.renderRegisterScreen = renderRegisterScreen;
 window.handleRegisterSubmit = handleRegisterSubmit;
 window.checkPasswordStrength = checkPasswordStrength;
+window.handleFacebookAuthRegister = handleFacebookAuthRegister;
+window.handleGoogleAuthRegister = handleGoogleAuthRegister;
 window.showTermsModal = showTermsModal;
 window.showPrivacyModal = showPrivacyModal;

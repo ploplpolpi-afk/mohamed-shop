@@ -5,7 +5,6 @@
 
 function renderLoginScreen() {
     return `
-        <div id="login-screen" class="screen">
             <header class="main-header auth-header">
                 <button class="back-btn" onclick="showScreen('welcome-screen')">◄ الرئيسية</button>
                 <h2>تسجيل الدخول</h2>
@@ -64,6 +63,19 @@ function renderLoginScreen() {
                         </button>
                     </form>
 
+                    <div class="auth-divider">
+                        <span>أو</span>
+                    </div>
+
+                    <div class="social-login">
+                        <button type="button" class="btn-social btn-facebook" onclick="handleFacebookAuthLogin()">
+                            <span>🔵 فيسبوك</span>
+                        </button>
+                        <button type="button" class="btn-social btn-google" onclick="handleGoogleAuthLogin()">
+                            <span>🔴 جوجل</span>
+                        </button>
+                    </div>
+
                     <div class="auth-footer">
                         <p>ليس لديك حساب بعد؟ 
                             <button type="button" class="link-btn" onclick="showScreen('register-screen')">
@@ -78,7 +90,6 @@ function renderLoginScreen() {
                     </div>
                 </div>
             </main>
-        </div>
     `;
 }
 
@@ -123,7 +134,6 @@ async function handleLoginSubmit(event) {
                 APP_STATE.accountName = result.user.full_name || identifier;
                 APP_STATE.accountPhone = identifier;
                 APP_STATE.accountMethod = 'phone';
-                APP_STATE.role = result.user.role === 'admin' ? 'admin' : result.user.role === 'seller' ? 'seller' : 'buyer';
                 APP_STATE.authUserId = result.user.id;
                 persistAppState();
                 updateRoleButton();
@@ -222,6 +232,53 @@ function togglePasswordVisibility(fieldId, button) {
     }
 }
 
+/**
+ * Facebook login handler
+ */
+async function handleFacebookAuthLogin() {
+    showSnack('جاري الاتصال بفيسبوك...');
+    try {
+        if (typeof window.signInWithFacebookSupabase === 'function') {
+            const result = await window.signInWithFacebookSupabase({
+                full_name: 'مستخدم فيسبوك',
+                role: 'buyer'
+            });
+            if (result?.success) {
+                APP_STATE.isLoggedIn = true;
+                persistAppState();
+                updateRoleButton();
+                showSnack('✅ تم تسجيل الدخول عبر فيسبوك');
+                showScreen('welcome-screen');
+                return;
+            }
+        }
+        showSnack('❌ تعذر تسجيل الدخول عبر فيسبوك');
+    } catch (error) {
+        console.error('Facebook login error:', error);
+        showSnack('❌ خطأ في الاتصال بفيسبوك');
+    }
+}
+
+/**
+ * Google login handler
+ */
+async function handleGoogleAuthLogin() {
+    showSnack('جاري الاتصال بجوجل...');
+    try {
+        if (typeof window.syncGoogleAccountFromSupabase === 'function') {
+            await window.syncGoogleAccountFromSupabase();
+            showSnack('✅ تم تسجيل الدخول عبر جوجل');
+            return;
+        }
+        showSnack('❌ تعذر تسجيل الدخول عبر جوجل');
+    } catch (error) {
+        console.error('Google login error:', error);
+        showSnack('❌ خطأ في الاتصال بجوجل');
+    }
+}
+
 window.renderLoginScreen = renderLoginScreen;
 window.handleLoginSubmit = handleLoginSubmit;
 window.togglePasswordVisibility = togglePasswordVisibility;
+window.handleFacebookAuthLogin = handleFacebookAuthLogin;
+window.handleGoogleAuthLogin = handleGoogleAuthLogin;

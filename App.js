@@ -17,7 +17,7 @@ function loadAppState() {
     try {
         const raw = localStorage.getItem(STORAGE_KEYS.appState);
         if (!raw) {
-            return { role: 'buyer', products: createDefaultProducts(), sellerBalances: {}, orders: [], searchHistory: [], isLoggedIn: false, accountName: '', accountPhone: '', accountMethod: 'phone', authUserId: null, sellerDisplayName: '' };
+            return { role: 'buyer', products: createDefaultProducts(), sellerBalances: {}, orders: [], isLoggedIn: false, accountName: '', accountPhone: '', accountMethod: 'phone', authUserId: null, sellerDisplayName: '' };
         }
         const parsed = JSON.parse(raw);
         return {
@@ -25,7 +25,6 @@ function loadAppState() {
             products: Array.isArray(parsed.products) && parsed.products.length ? parsed.products : createDefaultProducts(),
             sellerBalances: parsed.sellerBalances || {},
             orders: parsed.orders || [],
-            searchHistory: Array.isArray(parsed.searchHistory) ? parsed.searchHistory.slice(0, 20) : [],
             isLoggedIn: Boolean(parsed.isLoggedIn),
             accountName: parsed.accountName || '',
             accountPhone: parsed.accountPhone || '',
@@ -35,7 +34,7 @@ function loadAppState() {
         };
     } catch (e) {
         console.error('فشل تحميل الحالة:', e);
-        return { role: 'buyer', products: createDefaultProducts(), sellerBalances: {}, orders: [], searchHistory: [], isLoggedIn: false, accountName: '', accountPhone: '', accountMethod: 'phone', authUserId: null, sellerDisplayName: '' };
+        return { role: 'buyer', products: createDefaultProducts(), sellerBalances: {}, orders: [], isLoggedIn: false, accountName: '', accountPhone: '', accountMethod: 'phone', authUserId: null, sellerDisplayName: '' };
     }
 }
 
@@ -46,7 +45,7 @@ async function hydrateCatalogFromSupabase() {
         APP_STATE.products = remoteProducts.map(normalizeProduct);
         persistAppState();
         if (typeof renderProductsGrid === 'function') {
-            renderProductsGrid(getPersonalizedProducts(), 'المنتجات');
+            renderProductsGrid(getCatalogProducts(), 'المنتجات');
         }
     }
 }
@@ -309,32 +308,12 @@ function getAllProducts() {
     return getCatalogProducts();
 }
 
-function getPersonalizedProducts(products = getCatalogProducts()) {
-    const history = Array.isArray(APP_STATE.searchHistory) ? APP_STATE.searchHistory : [];
-    if (!history.length) return products;
-    const interests = history.reduce((scores, query, index) => {
-        const term = String(query || '').toLowerCase();
-        if (term) scores[term] = (scores[term] || 0) + Math.max(1, history.length - index);
-        return scores;
-    }, {});
-    return [...products].sort((first, second) => {
-        const score = product => Object.entries(interests).reduce((total, [term, weight]) => {
-            const text = `${product.name} ${product.type} ${product.material} ${product.category}`.toLowerCase();
-            return total + (text.includes(term) ? weight : 0);
-        }, 0);
-        return score(second) - score(first);
-    });
-}
-
 function renderProductsGrid(products, title = 'المنتجات') {
     const productsGrid = document.querySelector('.products-grid');
     if(!productsGrid) return;
-    const list = Array.isArray(products) ? products : getPersonalizedProducts();
-    const recommendation = title === 'المنتجات' && APP_STATE.searchHistory?.length
-        ? '<div class="recommendation-strip" role="status"><span class="recommendation-icon">✦</span><div><strong>ترشيحات مخصصة لك</strong><small>مرتبة حسب عمليات البحث الأخيرة</small></div></div>'
-        : '';
+    const list = Array.isArray(products) ? products : getCatalogProducts();
     productsGrid.innerHTML = list.length
-        ? recommendation + list.map(product => (typeof window.renderProductCard === 'function' ? window.renderProductCard(product) : '')).join('')
+        ? list.map(product => (typeof window.renderProductCard === 'function' ? window.renderProductCard(product) : '')).join('')
         : '<div class="empty-state">لا توجد منتجات حالياً</div>';
     if (title) {
         const titleEl = document.getElementById('current-section-title');
@@ -346,8 +325,6 @@ function renderProductsGrid(products, title = 'المنتجات') {
 function performSearch() {
     const q = document.getElementById('site-search-input').value.trim();
     if(!q) return showSnack('اكتب ما تريد البحث عنه');
-    APP_STATE.searchHistory = [q, ...(APP_STATE.searchHistory || []).filter(item => item.toLowerCase() !== q.toLowerCase())].slice(0, 20);
-    persistAppState();
     const list = getAllProducts();
     const lower = q.toLowerCase();
     const results = list.filter(product => `${product.name} ${product.type} ${product.material} ${product.category}`.toLowerCase().includes(lower));
@@ -570,96 +547,24 @@ function previewTransferImage() {
     preview.textContent = `تم اختيار الملف: ${file.name}`;
 }
 
-let locationPickerMap = null;
-let locationPickerMarker = null;
-let pickedLocation = null;
-
-function setPickedLocation(latitude, longitude) {
-    const lat = Number(latitude);
-    const lon = Number(longitude);
-    if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
-
-    pickedLocation = { lat: lat.toFixed(6), lon: lon.toFixed(6) };
-    const coordsText = document.getElementById('picked-coords');
-    const pickerCoords = document.getElementById('location-picker-coordinates');
-    const latInput = document.getElementById('client-lat');
-    const lonInput = document.getElementById('client-lon');
-    if (coordsText) coordsText.textContent = `${pickedLocation.lat}, ${pickedLocation.lon}`;
-    if (pickerCoords) pickerCoords.textContent = `${pickedLocation.lat}, ${pickedLocation.lon}`;
-    if (latInput) latInput.value = pickedLocation.lat;
-    if (lonInput) lonInput.value = pickedLocation.lon;
-
-    const point = [lat, lon];
-    if (locationPickerMarker) locationPickerMarker.setLatLng(point);
-    else if (locationPickerMap) locationPickerMarker = L.marker(point).addTo(locationPickerMap);
-}
-
-function closeLocationPicker() {
-    locationPickerMap?.remove();
-    locationPickerMap = null;
-    locationPickerMarker = null;
-    document.getElementById('location-picker-overlay')?.remove();
-}
-
-function confirmLocationSelection() {
-    if (!pickedLocation) return showSnack('اضغط على الخريطة لاختيار موقع التوصيل');
-    closeLocationPicker();
-    showSnack('تم حفظ موقع التوصيل');
-}
-
-function locateOnMap() {
-    if (!navigator.geolocation) return showSnack('المتصفح لا يدعم تحديد الموقع');
-    showSnack('جارٍ تحديد موقعك...');
-    navigator.geolocation.getCurrentPosition(position => {
-        const point = [position.coords.latitude, position.coords.longitude];
-        locationPickerMap?.setView(point, 16);
-        setPickedLocation(...point);
-    }, error => {
-        console.error('تعذر تحديد الموقع الحالي:', error);
-        showSnack('تعذر تحديد موقعك. يمكنك اختيار النقطة يدويًا على الخريطة.');
-    }, { enableHighAccuracy: true, timeout: 12000, maximumAge: 30000 });
-}
-
 function openLocationPicker() {
-    closeLocationPicker();
-    pickedLocation = null;
-    const savedLat = Number(document.getElementById('client-lat')?.value);
-    const savedLon = Number(document.getElementById('client-lon')?.value);
-    const hasSavedPoint = Number.isFinite(savedLat) && Number.isFinite(savedLon) && savedLat !== 0 && savedLon !== 0;
-    const center = hasSavedPoint ? [savedLat, savedLon] : [30.0444, 31.2357];
-
-    const overlay = document.createElement('div');
-    overlay.id = 'location-picker-overlay';
-    overlay.className = 'location-picker-overlay';
-    overlay.innerHTML = `
-        <section class="location-picker-dialog" role="dialog" aria-modal="true" aria-labelledby="location-picker-title">
-            <header class="location-picker-header">
-                <div>
-                    <h3 id="location-picker-title">موقع التوصيل</h3>
-                    <p id="location-picker-coordinates">اضغط على الخريطة لتحديد الموقع</p>
-                </div>
-                <button type="button" class="location-picker-close" aria-label="إغلاق" onclick="closeLocationPicker()">×</button>
-            </header>
-            <div id="location-picker-map" aria-label="خريطة اختيار موقع التوصيل"></div>
-            <footer class="location-picker-actions">
-                <button type="button" class="location-current-button" onclick="locateOnMap()">استخدم موقعي الحالي</button>
-                <button type="button" class="location-confirm-button" onclick="confirmLocationSelection()">تأكيد الموقع</button>
-            </footer>
-        </section>
-    `;
-    overlay.addEventListener('click', event => {
-        if (event.target === overlay) closeLocationPicker();
-    });
-    document.body.appendChild(overlay);
-
-    locationPickerMap = L.map('location-picker-map').setView(center, hasSavedPoint ? 15 : 6);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19,
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-    }).addTo(locationPickerMap);
-    locationPickerMap.on('click', event => setPickedLocation(event.latlng.lat, event.latlng.lng));
-    if (hasSavedPoint) setPickedLocation(savedLat, savedLon);
-    requestAnimationFrame(() => locationPickerMap?.invalidateSize());
+    if (!navigator.geolocation) return showSnack('المتصفح لا يدعم تحديد الموقع');
+    showSnack('جاري تحديد موقعك...');
+    navigator.geolocation.getCurrentPosition((pos) => {
+        const lat = pos.coords.latitude.toFixed(6);
+        const lon = pos.coords.longitude.toFixed(6);
+        const coordsText = document.getElementById('picked-coords');
+        const latInput = document.getElementById('client-lat');
+        const lonInput = document.getElementById('client-lon');
+        if (coordsText) coordsText.textContent = `${lat}, ${lon}`;
+        if (latInput) latInput.value = lat;
+        if (lonInput) lonInput.value = lon;
+        window.open(`https://www.google.com/maps?q=${lat},${lon}`, '_blank', 'noopener,noreferrer');
+        showSnack('تم اختيار الموقع بنجاح');
+    }, (err) => {
+        console.error(err);
+        showSnack('لم نتمكن من تحديد موقعك');
+    }, { timeout: 8000 });
 }
 
 function attachCheckoutFormListener() {
@@ -1019,7 +924,7 @@ function openAccountPanel() {
                 <div class="account-panel-row"><strong>الاسم:</strong> ${escapeHtml(APP_STATE.accountName || 'مستخدم')}</div>
                 <div class="account-panel-row"><strong>البريد أو الهاتف:</strong> ${escapeHtml(APP_STATE.accountPhone || '-')}</div>
                 <div class="account-panel-row"><strong>النمط:</strong> ${escapeHtml(roleLabel)}</div>
-                <div class="account-panel-row"><strong>طريقة الدخول:</strong> البريد الإلكتروني أو رقم الهاتف</div>
+                <div class="account-panel-row"><strong>طريقة الدخول:</strong> ${escapeHtml(APP_STATE.accountMethod === 'google' ? 'Google' : 'البريد/الرقم')}</div>
             </div>
             ${dashboardContent}
             <form class="auth-form" onsubmit="event.preventDefault(); updateAccountProfile()">
@@ -1030,6 +935,7 @@ function openAccountPanel() {
                     <div class="auth-role-picker">
                         <button type="button" class="${APP_STATE.role === 'buyer' ? 'active' : ''}" data-role="buyer" onclick="setLocalAccountRole('buyer')">مشتري</button>
                         <button type="button" class="${APP_STATE.role === 'seller' ? 'active' : ''}" data-role="seller" onclick="setLocalAccountRole('seller')">تاجر</button>
+                        <button type="button" class="${APP_STATE.role === 'admin' ? 'active' : ''}" data-role="admin" onclick="setLocalAccountRole('admin')">مدير</button>
                     </div>
                 </div>
                 <div class="auth-actions">
@@ -1043,10 +949,6 @@ function openAccountPanel() {
 }
 
 function setLocalAccountRole(role) {
-    if (role === 'admin') {
-        showSnack('صلاحية المدير متاحة للحسابات الإدارية فقط');
-        return;
-    }
     APP_STATE.role = role;
     if (role === 'seller') {
         APP_STATE.sellerDisplayName = APP_STATE.accountName || APP_STATE.accountPhone || '';
@@ -1175,6 +1077,37 @@ async function requestFullscreenMode() {
     }
 }
 
+async function handleFacebookAuth() {
+    const button = document.querySelector('.btn-facebook');
+    if (button) {
+        button.disabled = true;
+        button.textContent = 'جاري الاتصال بفيسبوك...';
+    }
+    try {
+        if (typeof window.signInWithFacebookSupabase === 'function') {
+            const result = await window.signInWithFacebookSupabase({
+                full_name: document.getElementById('auth-name')?.value.trim() || APP_STATE.accountName || 'مستخدم',
+                role: APP_STATE.role || 'buyer'
+            });
+            if (result?.success) {
+                showSnack('تم بدء تسجيل الدخول عبر فيسبوك');
+                return;
+            }
+            showSnack(result?.message || 'تعذر فتح تسجيل الدخول عبر فيسبوك الآن');
+        } else {
+            showSnack('ميزة فيسبوك غير متاحة حالياً');
+        }
+    } catch (err) {
+        console.error('Facebook auth failed', err);
+        showSnack('تعذر التواصل مع فيسبوك الآن');
+    } finally {
+        if (button) {
+            button.disabled = false;
+            button.textContent = 'تسجيل عبر فيسبوك';
+        }
+    }
+}
+
 function renderAccountUi() {
     const button = document.getElementById('role-toggle-btn');
     const chip = document.getElementById('account-chip');
@@ -1183,7 +1116,7 @@ function renderAccountUi() {
     }
     if (chip) {
         if (APP_STATE.isLoggedIn) {
-            const roleLabel = APP_STATE.role === 'admin' ? 'مدير' : APP_STATE.role === 'seller' ? 'تاجر' : 'مشتري';
+            const roleLabel = APP_STATE.role === 'seller' ? 'تاجر' : 'مشتري';
             chip.innerHTML = `<span class="account-chip-icon">👤</span><span>${escapeHtml(APP_STATE.accountName || 'مستخدم')} · ${roleLabel}</span>`;
             chip.style.display = 'inline-flex';
         } else {
@@ -1215,6 +1148,7 @@ function openAuthModal() {
                         <div class="auth-role-picker">
                             <button type="button" class="${APP_STATE.role === 'buyer' ? 'active' : ''}" data-role="buyer" onclick="setSelectedAuthRole('buyer')">مشتري</button>
                             <button type="button" class="${APP_STATE.role === 'seller' ? 'active' : ''}" data-role="seller" onclick="setSelectedAuthRole('seller')">تاجر</button>
+                            <button type="button" class="${APP_STATE.role === 'admin' ? 'active' : ''}" data-role="admin" onclick="setSelectedAuthRole('admin')">مدير</button>
                         </div>
                     ` : ''}
                     <input id="auth-name" placeholder="الاسم بالكامل" value="${escapeHtml(APP_STATE.accountName || '')}" />
@@ -1226,6 +1160,9 @@ function openAuthModal() {
                 <div class="auth-actions">
                     <button class="btn-order primary" type="submit">${AUTH_UI_MODE === 'signup' ? 'إنشاء الحساب' : 'تسجيل الدخول'}</button>
                     <button class="btn-map" type="button" onclick="toggleAuthMode('${AUTH_UI_MODE === 'signup' ? 'signin' : 'signup'}')">${AUTH_UI_MODE === 'signup' ? 'لدي حساب بالفعل' : 'إنشاء حساب جديد'}</button>
+                </div>
+                <div class="auth-socials">
+                    <button class="btn-facebook" type="button" onclick="handleFacebookAuth()">تسجيل عبر فيسبوك</button>
                 </div>
             </form>
         </div>
@@ -1426,7 +1363,7 @@ async function submitSellerProduct(e) {
     if (typeof window.syncProductsToSupabase === 'function') {
         await window.syncProductsToSupabase(getCatalogProducts());
     }
-    renderProductsGrid(getPersonalizedProducts(), 'المنتجات');
+    renderProductsGrid(getCatalogProducts(), 'المنتجات');
     closeSellerPanel();
     showSnack('تم إضافة المنتج ومزامنته في المتجر');
 }
@@ -1487,8 +1424,6 @@ function openSellerPanel() {
 }
 
 const APP_GLOBALS = {
-    APP_STATE,
-    persistAppState,
     showScreen,
     toggleScreenLock,
     toggleSubMenu,
@@ -1496,8 +1431,6 @@ const APP_GLOBALS = {
     openCheckoutPage,
     setMainImage,
     thumbNav,
-    addToCartFromCard,
-    addToCartFromModal,
     getAllProducts,
     performSearch,
     setupSearchSuggest,
@@ -1506,15 +1439,11 @@ const APP_GLOBALS = {
     openCart,
     closeCart,
     renderProductsGrid,
-    getPersonalizedProducts,
     renderCheckoutForm,
     renderCheckoutFormFallback,
     updatePaymentFields,
     previewTransferImage,
     openLocationPicker,
-    closeLocationPicker,
-    locateOnMap,
-    confirmLocationSelection,
     openMapsForDelivery,
     removeFromCart,
     goToCheckout,
@@ -1526,14 +1455,6 @@ const APP_GLOBALS = {
     closeProductModal,
     toggleRoleMode,
     updateRoleButton,
-    setLocalAccountRole,
-    updateAccountProfile,
-    editSellerProduct,
-    updateOrderStatus,
-    requestFullscreenMode,
-    closeFullscreenHint,
-    finalizeAuthenticatedUser,
-    syncGoogleAccountFromSupabase,
     openSellerPanel,
     closeSellerPanel,
     submitSellerProduct,
@@ -1577,13 +1498,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         // رص شاشات تسجيل الدخول والتسجيل
         if(typeof window.renderLoginScreen === 'function') {
-            document.getElementById('login-screen').outerHTML = window.renderLoginScreen();
+            document.getElementById('login-screen').innerHTML = window.renderLoginScreen();
             console.log('Login screen rendered');
         } else {
             console.warn('renderLoginScreen is not a function');
         }
         if(typeof window.renderRegisterScreen === 'function') {
-            document.getElementById('register-screen').outerHTML = window.renderRegisterScreen();
+            document.getElementById('register-screen').innerHTML = window.renderRegisterScreen();
             console.log('Register screen rendered');
         } else {
             console.warn('renderRegisterScreen is not a function');
@@ -1596,7 +1517,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const productsGrid = document.querySelector('.products-grid');
     if(productsGrid && typeof window.renderProductCard === 'function') {
-        renderProductsGrid(getPersonalizedProducts(), 'المنتجات');
+        renderProductsGrid(getCatalogProducts(), 'المنتجات');
     }
 
     initializeProductInteractions();

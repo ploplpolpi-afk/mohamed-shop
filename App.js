@@ -1487,6 +1487,8 @@ function openSellerPanel() {
 }
 
 const APP_GLOBALS = {
+    APP_STATE,
+    persistAppState,
     showScreen,
     toggleScreenLock,
     toggleSubMenu,
@@ -1494,6 +1496,8 @@ const APP_GLOBALS = {
     openCheckoutPage,
     setMainImage,
     thumbNav,
+    addToCartFromCard,
+    addToCartFromModal,
     getAllProducts,
     performSearch,
     setupSearchSuggest,
@@ -1522,6 +1526,14 @@ const APP_GLOBALS = {
     closeProductModal,
     toggleRoleMode,
     updateRoleButton,
+    setLocalAccountRole,
+    updateAccountProfile,
+    editSellerProduct,
+    updateOrderStatus,
+    requestFullscreenMode,
+    closeFullscreenHint,
+    finalizeAuthenticatedUser,
+    syncGoogleAccountFromSupabase,
     openSellerPanel,
     closeSellerPanel,
     submitSellerProduct,
